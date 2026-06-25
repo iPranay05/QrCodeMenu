@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import Aurora from '@/components/ui/Aurora'
 import { QrCode, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 
 const schema = z.object({
@@ -42,60 +43,60 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen hero-gradient flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
+    <Aurora showGrid={true} className="flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md relative z-10 my-auto">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-orange-200">
-              <QrCode className="w-6 h-6 text-white" />
+          <Link href="/" className="inline-flex items-center gap-3 mb-6 hover:scale-105 transition-transform duration-300">
+            <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center shadow-sm">
+              <QrCode className="w-6 h-6 text-white animate-pulse" />
             </div>
-            <span className="text-2xl font-extrabold gradient-text">MenuQR</span>
+            <span className="text-2xl font-black text-slate-800 tracking-tight">MenuQR</span>
           </Link>
-          <h1 className="text-3xl font-extrabold text-gray-900">Welcome back! 👋</h1>
-          <p className="text-gray-500 mt-2">Sign in to manage your restaurant menu</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Welcome back! 👋</h1>
+          <p className="text-slate-500 mt-2 text-sm font-medium">Sign in to manage your restaurant menu</p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-3xl shadow-2xl shadow-orange-100 p-8 border border-orange-100">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div className="bg-white rounded-3xl shadow-[0_24px_64px_rgba(15,23,42,0.04)] p-8 sm:p-10 border border-slate-200/80">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Email */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+              <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   {...register('email')}
                   id="email"
                   type="email"
                   placeholder="chef@restaurant.com"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:outline-none transition-colors text-gray-900 placeholder-gray-400"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-slate-900 placeholder-slate-400 bg-white"
                 />
               </div>
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-rose-500 text-xs mt-1.5 font-semibold pl-1">{errors.email.message}</p>}
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+              <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   {...register('password')}
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-12 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:outline-none transition-colors text-gray-900 placeholder-gray-400"
+                  className="w-full pl-11 pr-12 py-3.5 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-slate-900 placeholder-slate-400 bg-white"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-rose-500 text-xs mt-1.5 font-semibold pl-1">{errors.password.message}</p>}
             </div>
 
             {/* Submit */}
@@ -103,29 +104,29 @@ export default function LoginPage() {
               id="login-btn"
               type="submit"
               disabled={loading}
-              className="btn-gradient w-full text-white py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200 mt-2"
+              className="bg-slate-900 hover:bg-slate-800 text-white w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors duration-200 mt-2 cursor-pointer shadow-sm"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
                   <span>Sign In</span>
-                  <ArrowRight size={18} />
+                  <ArrowRight size={18} className="transition-transform" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-500 text-sm">
+          <div className="mt-8 text-center border-t border-slate-100 pt-6">
+            <p className="text-slate-500 text-sm font-semibold">
               Don&apos;t have an account?{' '}
-              <Link href="/register" className="text-orange-500 font-bold hover:text-red-500 transition-colors">
+              <Link href="/register" className="text-indigo-600 font-bold hover:text-indigo-700 transition-colors">
                 Create one free →
               </Link>
             </p>
           </div>
         </div>
       </div>
-    </div>
+    </Aurora>
   )
 }

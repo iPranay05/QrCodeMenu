@@ -29,41 +29,41 @@ export default function DashboardSidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 shadow-sm fixed h-full z-30">
-        <div className="p-6 border-b border-gray-100">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-orange-200">
-              <QrCode className="w-5 h-5 text-white" />
+      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200/80 shadow-[1px_0_4px_rgba(15,23,42,0.01)] fixed h-full z-30">
+        <div className="p-5 border-b border-slate-100">
+          <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center shadow-sm">
+              <QrCode className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="text-xl font-extrabold gradient-text">MenuQR</span>
+            <span className="text-lg font-black text-slate-800 tracking-tight">MenuQR</span>
           </Link>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-3 space-y-1">
           {navItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all ${
+                className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
                   active
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-200'
-                    : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600'
+                    ? 'bg-slate-900 text-white shadow-sm font-bold'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-950'
                 }`}
               >
                 <Icon size={18} />
                 {label}
-                {active && <ChevronRight size={16} className="ml-auto" />}
+                {active && <ChevronRight size={14} className="ml-auto opacity-60" />}
               </Link>
             )
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-3 border-t border-slate-100">
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-500 font-medium text-sm w-full transition-all"
+            className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 font-semibold text-sm w-full transition-all duration-200 cursor-pointer"
           >
             <LogOut size={18} />
             Sign Out
@@ -72,36 +72,41 @@ export default function DashboardSidebar() {
       </aside>
 
       {/* Mobile Top Header */}
-      <header className="md:hidden fixed top-0 w-full bg-white border-b border-gray-100 shadow-sm z-30 px-4 h-16 flex items-center justify-between">
+      <header className="md:hidden fixed top-0 w-full bg-white border-b border-slate-200/80 shadow-sm z-30 px-4 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center shadow-sm">
             <QrCode className="w-4 h-4 text-white" />
           </div>
-          <span className="font-extrabold gradient-text">MenuQR</span>
+          <span className="font-black text-base text-slate-800 tracking-tight">MenuQR</span>
         </Link>
-        <button onClick={handleSignOut} className="text-gray-500 hover:text-red-500 transition-colors">
-          <LogOut size={20} />
+        <button 
+          onClick={handleSignOut} 
+          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+        >
+          <LogOut size={16} />
         </button>
       </header>
 
-      {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 w-full bg-white border-t border-gray-100 shadow-lg z-30 flex">
+      {/* Mobile Bottom Floating Nav */}
+      <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-white border border-slate-200 shadow-xl rounded-2xl z-40 px-2 py-2 flex items-center justify-around">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
           return (
             <Link
               key={href}
               href={href}
-              className={`flex-1 flex flex-col items-center py-3 gap-1 text-xs font-medium transition-all ${
-                active ? 'text-orange-500' : 'text-gray-400'
+              className={`flex flex-col items-center py-1.5 px-3 gap-1 rounded-xl text-[10px] font-semibold transition-all duration-200 ${
+                active 
+                  ? 'text-slate-900 bg-slate-100 font-bold' 
+                  : 'text-slate-400 hover:text-slate-900'
               }`}
             >
-              <Icon size={20} />
+              <Icon size={16} />
               <span>{label.split(' ')[0]}</span>
             </Link>
           )
         })}
-      </nav>
+      </div>
     </>
   )
 }

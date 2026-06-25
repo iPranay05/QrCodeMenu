@@ -33,7 +33,7 @@ export default function QrCodePage() {
 
   const copyUrl = () => {
     navigator.clipboard.writeText(menuUrl)
-    toast.success('Menu URL copied!')
+    toast.success('Menu URL copied! 📋')
   }
 
   const downloadQR = useCallback(() => {
@@ -56,7 +56,7 @@ export default function QrCodePage() {
       link.download = `${restaurant?.slug}-qr-menu.png`
       link.href = canvas.toDataURL('image/png')
       link.click()
-      toast.success('QR Code downloaded!')
+      toast.success('QR Code downloaded! 🖼️')
     }
     img.src = `data:image/svg+xml;base64,${btoa(data)}`
   }, [restaurant])
@@ -71,8 +71,8 @@ export default function QrCodePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -80,36 +80,37 @@ export default function QrCodePage() {
   if (!restaurant) return null
 
   return (
-    <div className="p-6 lg:p-10 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900">Your QR Code</h1>
-        <p className="text-gray-500 mt-1">Download and display this on your tables, menus, or windows.</p>
+    <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight">Your Menu QR Code 📲</h1>
+        <p className="text-slate-500 mt-1.5 text-sm font-semibold">Download and display this on your tables, menus, or windows so customers can scan and order.</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* QR Code Display */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-xl p-8 flex flex-col items-center">
+      <div className="grid md:grid-cols-2 gap-8 items-start">
+        {/* QR Code Card */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_24px_64px_rgba(15,23,42,0.04)] p-8 flex flex-col items-center">
           {/* Header Strip */}
           <div
-            className="w-full rounded-xl py-4 px-5 mb-6 text-white text-center"
-            style={{ background: `linear-gradient(135deg, ${restaurant.primary_color}, ${restaurant.primary_color}cc)` }}
+            className="w-full rounded-2xl py-5 px-5 mb-6 text-white text-center shadow-md relative overflow-hidden"
+            style={{ background: `linear-gradient(135deg, ${restaurant.primary_color}, ${restaurant.primary_color}ee)` }}
           >
             {restaurant.logo_url ? (
-              <img src={restaurant.logo_url} alt="logo" className="w-12 h-12 rounded-full mx-auto mb-2 object-cover border-2 border-white/30" />
+              <img src={restaurant.logo_url} alt="logo" className="w-14 h-14 rounded-full mx-auto mb-2.5 object-cover border-2 border-white/30" />
             ) : (
-              <div className="w-12 h-12 rounded-full mx-auto mb-2 bg-white/20 flex items-center justify-center">
-                <QrCode size={24} />
+              <div className="w-14 h-14 rounded-full mx-auto mb-2.5 bg-white/20 flex items-center justify-center">
+                <QrCode size={26} />
               </div>
             )}
             <div className="font-extrabold text-xl">{restaurant.name}</div>
-            {restaurant.tagline && <div className="text-white/75 text-xs mt-0.5">{restaurant.tagline}</div>}
+            {restaurant.tagline && <div className="text-white/80 text-xs mt-0.5 font-medium">{restaurant.tagline}</div>}
           </div>
 
-          {/* QR */}
-          <div ref={qrRef} className="p-4 bg-white rounded-2xl border-2 border-gray-100 shadow-inner">
+          {/* QR Container */}
+          <div ref={qrRef} className="p-5 bg-white rounded-[24px] border border-slate-100 shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)]">
             <QRCodeSVG
               value={menuUrl}
-              size={220}
+              size={240}
               fgColor="#1a1a1a"
               bgColor="#ffffff"
               level="H"
@@ -117,14 +118,14 @@ export default function QrCodePage() {
             />
           </div>
 
-          <p className="text-gray-500 text-sm mt-4 text-center">Scan to view our menu</p>
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-4 text-center">Scan to view our menu</p>
 
-          {/* Download Buttons */}
+          {/* Download/Share Buttons */}
           <div className="flex flex-col w-full gap-3 mt-6">
             <button
               id="download-qr-btn"
               onClick={downloadQR}
-              className="btn-gradient text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-200"
+              className="bg-slate-900 hover:bg-slate-800 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer hover:scale-[1.01] transition-all"
             >
               <Download size={18} />
               <span>Download PNG</span>
@@ -132,78 +133,78 @@ export default function QrCodePage() {
             <button
               id="share-qr-btn"
               onClick={shareUrl}
-              className="border-2 border-orange-200 text-orange-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-orange-50 transition-colors"
+              className="border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
             >
               <Share2 size={18} />
-              Share Menu Link
+              <span>Share Menu Link</span>
             </button>
           </div>
         </div>
 
-        {/* Info Panel */}
-        <div className="space-y-5">
-          {/* URL */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Menu URL</div>
+        {/* Info & Settings Panel */}
+        <div className="space-y-6">
+          {/* Menu Link Box */}
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-[0_8px_32px_rgba(15,23,42,0.02)]">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5">Menu Link</div>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-lg break-all">{menuUrl}</code>
+              <code className="flex-1 text-xs text-indigo-600 bg-indigo-50/50 border border-indigo-100/50 px-3 py-2.5 rounded-xl break-all font-mono font-semibold">{menuUrl}</code>
             </div>
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2 mt-4">
               <button
                 id="copy-url-btn"
                 onClick={copyUrl}
-                className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-orange-500 font-medium px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-all border border-gray-200"
+                className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-indigo-600 font-bold px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 transition-all cursor-pointer"
               >
                 <Copy size={14} />
-                Copy
+                Copy Link
               </button>
               <a
                 href={menuUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-orange-500 font-medium px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-all border border-gray-200"
+                className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-indigo-600 font-bold px-4 py-2.5 rounded-xl bg-white border border-slate-200/80 transition-all cursor-pointer"
               >
                 <ExternalLink size={14} />
-                Open
+                Open Link
               </a>
             </div>
           </div>
 
-          {/* Tips */}
-          <div className="bg-gradient-to-br from-orange-50 to-rose-50 rounded-2xl border border-orange-100 p-5">
-            <div className="text-sm font-bold text-orange-700 mb-3">💡 Tips for Using Your QR Code</div>
-            <ul className="space-y-2 text-sm text-orange-700">
+          {/* Guidelines/Tips */}
+          <div className="bg-gradient-to-br from-indigo-50/40 to-violet-50/40 border border-indigo-100/60 rounded-3xl p-6 shadow-sm">
+            <div className="text-sm font-black text-indigo-900 mb-3.5">💡 Tips for Using Your QR Code</div>
+            <ul className="space-y-2.5 text-xs font-semibold text-indigo-800">
               {[
-                'Print and laminate it for each table',
-                'Add it to your door or window display',
-                'Include it on your business cards',
-                'Share the link on WhatsApp, Instagram, or Google Maps',
-                'Use it in your social media bio',
+                'Print and place it at every customer table',
+                'Stick it on your main window or entry door',
+                'Incorporate it into flyers or business cards',
+                'Share on social platforms like Instagram, WhatsApp, or Google Maps',
+                'Update your digital menu anytime without changing the printed QR code!',
               ].map((tip, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-orange-400 mt-0.5">→</span>
-                  {tip}
+                <li key={i} className="flex items-start gap-2.5">
+                  <span className="text-indigo-500 mt-0.5 shrink-0">→</span>
+                  <span>{tip}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Stats */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Menu Details</div>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div className="flex justify-between">
-                <span>Restaurant</span>
-                <span className="font-semibold text-gray-900">{restaurant.name}</span>
+          {/* Restaurant Quick Stats */}
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-[0_8px_32px_rgba(15,23,42,0.02)]">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Metadata Details</div>
+            <div className="space-y-3 text-xs font-semibold text-slate-600">
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span>Restaurant Name</span>
+                <span className="font-extrabold text-slate-800">{restaurant.name}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Slug</span>
-                <span className="font-semibold text-gray-900">{restaurant.slug}</span>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span>Menu Slug</span>
+                <span className="font-extrabold text-slate-800">{restaurant.slug}</span>
               </div>
               {restaurant.phone && (
                 <div className="flex justify-between">
-                  <span>Phone</span>
-                  <span className="font-semibold text-gray-900">{restaurant.phone}</span>
+                  <span>Phone Number</span>
+                  <span className="font-extrabold text-slate-800">{restaurant.phone}</span>
                 </div>
               )}
             </div>

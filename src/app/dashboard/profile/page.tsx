@@ -19,8 +19,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 const COLOR_PRESETS = [
-  '#F97316', '#EF4444', '#EC4899', '#A855F7',
-  '#3B82F6', '#10B981', '#F59E0B', '#6366F1',
+  '#6366F1', '#4F46E5', '#A855F7', '#EC4899',
+  '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
 ]
 
 export default function ProfilePage() {
@@ -39,7 +39,7 @@ export default function ProfilePage() {
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { primary_color: '#F97316' },
+    defaultValues: { primary_color: '#6366F1' },
   })
   const primaryColor = watch('primary_color')
 
@@ -85,7 +85,7 @@ export default function ProfilePage() {
           address: data.address || '',
           phone: data.phone || '',
           website: data.website || '',
-          primary_color: data.primary_color || '#F97316',
+          primary_color: data.primary_color || '#6366F1',
         })
       }
     } catch (err: any) {
@@ -114,7 +114,7 @@ export default function ProfilePage() {
         user_id: user.id,
         name: initName.trim(),
         slug,
-        primary_color: '#F97316'
+        primary_color: '#6366F1'
       }).select().single()
 
       if (error) {
@@ -194,7 +194,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -213,7 +213,7 @@ export default function ProfilePage() {
               href="https://supabase.com/dashboard/project/zzxksexzlsoalzcvfjes/sql/new" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="text-orange-500 font-bold hover:underline mx-1"
+              className="text-indigo-600 font-bold hover:underline mx-1"
             >
               Supabase SQL Editor
             </a> 
@@ -229,7 +229,7 @@ export default function ProfilePage() {
           </div>
           <button
             onClick={() => { setLoading(true); loadRestaurant(); }}
-            className="btn-gradient text-white font-bold px-6 py-3 rounded-xl mt-6 shadow-lg shadow-orange-200 hover:scale-105 transition-transform"
+            className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-xl mt-6 shadow-sm hover:scale-105 transition-transform"
           >
             Check Again / Refresh
           </button>
@@ -241,30 +241,30 @@ export default function ProfilePage() {
   if (dbError === 'restaurant_missing' || !restaurant) {
     return (
       <div className="p-6 lg:p-10 max-w-md mx-auto">
-        <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-2xl shadow-orange-50 text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white shadow-lg shadow-orange-100">
+        <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm text-center">
+          <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white shadow-sm">
             <Sparkles className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-3">Create Restaurant Profile</h2>
-          <p className="text-gray-500 mb-6 text-sm">
+          <h2 className="text-2xl font-black text-slate-800 mb-3">Create Restaurant Profile</h2>
+          <p className="text-slate-500 mb-6 text-sm">
             Enter your restaurant's name to initialize your digital QR code menu builder.
           </p>
           <div className="space-y-4 text-left">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Restaurant Name</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Restaurant Name</label>
               <input
                 id="init-restaurant-name"
                 type="text"
                 value={initName}
                 onChange={e => setInitName(e.target.value)}
                 placeholder="e.g. Gourmet Bistro"
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:outline-none text-gray-900"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:outline-none text-slate-800"
               />
             </div>
             <button
               onClick={createInitialRestaurant}
               disabled={creatingRest || !initName.trim()}
-              className="btn-gradient w-full text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-orange-200"
+              className="bg-slate-900 hover:bg-slate-800 w-full text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-60 shadow-sm"
             >
               {creatingRest ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -279,190 +279,217 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-6 lg:p-10 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900">Restaurant Profile</h1>
-        <p className="text-gray-500 mt-1">This info appears on your public menu page.</p>
-      </div>
-
-      {/* Cover Photo */}
-      <div className="relative mb-6 rounded-2xl overflow-hidden bg-gradient-to-r from-orange-100 to-rose-100 h-40">
-        {restaurant?.cover_url ? (
-          <img src={restaurant.cover_url} alt="Cover" className="w-full h-full object-cover" />
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-400">
-            <div className="text-center">
-              <Camera size={32} className="mx-auto mb-2" />
-              <span className="text-sm">No cover photo</span>
-            </div>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto fade-in-up">
+      {/* Header Section */}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Restaurant Profile</h1>
+          <p className="text-gray-500 mt-1 text-sm">This info appears on your public menu page.</p>
+        </div>
+        {restaurant && (
+          <div className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100/50 px-3.5 py-2 rounded-2xl self-start sm:self-center">
+            Slug: {restaurant.slug}
           </div>
         )}
-        <button
-          onClick={() => coverInputRef.current?.click()}
-          disabled={coverUploading}
-          className="absolute top-3 right-3 bg-white/90 backdrop-blur text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-white shadow"
-        >
-          {coverUploading ? (
-            <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Upload size={14} />
-          )}
-          Change Cover
-        </button>
-        <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
       </div>
 
-      {/* Logo */}
-      <div className="flex items-center gap-5 mb-8">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-orange-50 flex items-center justify-center">
-            {restaurant?.logo_url ? (
-              <img src={restaurant.logo_url} alt="Logo" className="w-full h-full object-cover" />
-            ) : (
-              <Building2 size={32} className="text-orange-300" />
-            )}
-          </div>
+      <div className="glass-panel rounded-3xl p-6 sm:p-8 shadow-sm space-y-8">
+        {/* Cover Photo */}
+        <div className="relative rounded-2xl overflow-hidden bg-slate-100 h-44 shadow-inner group">
+          {restaurant?.cover_url ? (
+            <img src={restaurant.cover_url} alt="Cover" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+          ) : (
+            <div className="flex items-center justify-center h-full text-slate-400">
+              <div className="text-center">
+                <Camera size={32} className="mx-auto mb-2 text-slate-400" />
+                <span className="text-sm font-semibold">No cover photo selected</span>
+              </div>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
           <button
-            onClick={() => logoInputRef.current?.click()}
-            disabled={logoUploading}
-            className="absolute -bottom-2 -right-2 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center shadow-lg text-white hover:bg-orange-600 transition-colors"
+            type="button"
+            onClick={() => coverInputRef.current?.click()}
+            disabled={coverUploading}
+            className="absolute bottom-4 right-4 bg-white/90 hover:bg-white backdrop-blur text-gray-800 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:scale-105 active:scale-95 shadow transition-all"
           >
-            {logoUploading ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            {coverUploading ? (
+              <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Camera size={14} />
+              <Upload size={14} className="text-slate-600" />
             )}
+            <span>Change Cover</span>
           </button>
-          <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-        </div>
-        <div>
-          <div className="font-bold text-gray-900 text-lg">{restaurant?.name}</div>
-          <div className="text-gray-500 text-sm">Menu URL: /menu/{restaurant?.slug}</div>
-        </div>
-      </div>
-
-      {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-5">
-          {/* Restaurant Name */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Restaurant Name *</label>
-            <input
-              {...register('name')}
-              id="profile-name"
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:outline-none transition-colors text-gray-900"
-              placeholder="Spice Garden"
-            />
-            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
-          </div>
-
-          {/* Tagline */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Tagline</label>
-            <input
-              {...register('tagline')}
-              id="profile-tagline"
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:outline-none transition-colors text-gray-900"
-              placeholder="Authentic Indian cuisine since 2010"
-            />
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              <Phone size={14} className="inline mr-1 text-orange-400" /> Phone
-            </label>
-            <input
-              {...register('phone')}
-              id="profile-phone"
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:outline-none transition-colors text-gray-900"
-              placeholder="+91 98765 43210"
-            />
-          </div>
-
-          {/* Website */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              <Globe size={14} className="inline mr-1 text-orange-400" /> Website
-            </label>
-            <input
-              {...register('website')}
-              id="profile-website"
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:outline-none transition-colors text-gray-900"
-              placeholder="https://yourrestaurant.com"
-            />
-          </div>
+          <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
         </div>
 
-        {/* Address */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            <MapPin size={14} className="inline mr-1 text-orange-400" /> Address
-          </label>
-          <input
-            {...register('address')}
-            id="profile-address"
-            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:outline-none transition-colors text-gray-900"
-            placeholder="123 Food Street, Mumbai, India"
-          />
-        </div>
-
-        {/* Brand Color */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
-            <Palette size={14} className="inline mr-1 text-orange-400" /> Brand Color
-          </label>
-          <div className="flex items-center gap-3 flex-wrap">
-            {COLOR_PRESETS.map(color => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => setValue('primary_color', color)}
-                className="w-10 h-10 rounded-xl shadow-md transition-transform hover:scale-110"
-                style={{
-                  backgroundColor: color,
-                  outline: primaryColor === color ? `3px solid ${color}` : 'none',
-                  outlineOffset: '2px',
-                }}
-              />
-            ))}
-            <input
-              type="color"
-              id="custom-color"
-              value={primaryColor}
-              onChange={e => setValue('primary_color', e.target.value)}
-              className="w-10 h-10 rounded-xl cursor-pointer border-2 border-gray-200 p-0.5"
-              title="Custom color"
-            />
-          </div>
-          <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-            Preview:
-            <span
-              className="px-4 py-1 rounded-full text-white font-semibold text-xs shadow"
-              style={{ backgroundColor: primaryColor }}
+        {/* Logo */}
+        <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100/80">
+          <div className="relative">
+            <div className="w-24 h-24 rounded-3xl border-4 border-white shadow-xl overflow-hidden bg-white flex items-center justify-center relative group">
+              {restaurant?.logo_url ? (
+                <img src={restaurant.logo_url} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <Building2 size={36} className="text-slate-300" />
+              )}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Camera size={20} className="text-white" />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => logoInputRef.current?.click()}
+              disabled={logoUploading}
+              className="absolute -bottom-2 -right-2 w-10 h-10 bg-slate-900 hover:bg-slate-800 rounded-2xl flex items-center justify-center shadow-md text-white hover:scale-105 active:scale-95 transition-all"
             >
-              Your Menu Accent
-            </span>
+              {logoUploading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Upload size={16} />
+              )}
+            </button>
+            <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+          </div>
+          <div className="text-center sm:text-left">
+            <h2 className="font-extrabold text-gray-950 text-xl tracking-tight">{restaurant?.name || "Initialize Restaurant"}</h2>
+            <div className="text-sm text-gray-500 mt-1 flex items-center gap-1.5 justify-center sm:justify-start">
+              <span className="font-bold text-slate-600">Menu URL:</span>
+              <a href={`/menu/${restaurant?.slug}`} target="_blank" className="underline hover:text-indigo-600 font-medium text-indigo-600">
+                /menu/{restaurant?.slug}
+              </a>
+            </div>
           </div>
         </div>
 
-        {/* Save Button */}
-        <button
-          id="save-profile-btn"
-          type="submit"
-          disabled={saving}
-          className="btn-gradient text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-200 disabled:opacity-60"
-        >
-          {saving ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <>
-              <Save size={18} />
-              <span>Save Profile</span>
-            </>
-          )}
-        </button>
-      </form>
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Restaurant Name */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-2">Restaurant Name *</label>
+              <input
+                {...register('name')}
+                id="profile-name"
+                className="w-full px-4 py-3 rounded-2xl glass-input text-sm text-gray-900 font-medium"
+                placeholder="Spice Garden"
+              />
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+            </div>
+
+            {/* Tagline */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-2">Tagline</label>
+              <input
+                {...register('tagline')}
+                id="profile-tagline"
+                className="w-full px-4 py-3 rounded-2xl glass-input text-sm text-gray-900 font-medium"
+                placeholder="Authentic Indian cuisine since 2010"
+              />
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-2">Phone</label>
+              <div className="relative">
+                <span className="absolute left-4 top-3.5 text-gray-400"><Phone size={16} /></span>
+                <input
+                  {...register('phone')}
+                  id="profile-phone"
+                  className="w-full pl-11 pr-4 py-3 rounded-2xl glass-input text-sm text-gray-900 font-medium"
+                  placeholder="+91 98765 43210"
+                />
+              </div>
+            </div>
+
+            {/* Website */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-2">Website</label>
+              <div className="relative">
+                <span className="absolute left-4 top-3.5 text-gray-400"><Globe size={16} /></span>
+                <input
+                  {...register('website')}
+                  id="profile-website"
+                  className="w-full pl-11 pr-4 py-3 rounded-2xl glass-input text-sm text-gray-900 font-medium"
+                  placeholder="https://yourrestaurant.com"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-600 mb-2">Address</label>
+            <div className="relative">
+              <span className="absolute left-4 top-3.5 text-gray-400"><MapPin size={16} /></span>
+              <input
+                {...register('address')}
+                id="profile-address"
+                className="w-full pl-11 pr-4 py-3 rounded-2xl glass-input text-sm text-gray-900 font-medium"
+                placeholder="123 Food Street, Mumbai, India"
+              />
+            </div>
+          </div>
+
+          {/* Brand Color */}
+          <div className="pt-2">
+            <label className="block text-sm font-semibold text-slate-600 mb-3">Brand Color</label>
+            <div className="flex items-center gap-3.5 flex-wrap">
+              {COLOR_PRESETS.map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setValue('primary_color', color)}
+                  className="w-10 h-10 rounded-2xl shadow-md transition-all hover:scale-110 active:scale-95 duration-200"
+                  style={{
+                    backgroundColor: color,
+                    border: primaryColor === color ? '3px solid #ffffff' : 'none',
+                    boxShadow: primaryColor === color ? `0 0 0 2px ${color}` : 'none',
+                  }}
+                />
+              ))}
+              <div className="relative w-10 h-10 rounded-2xl border-2 border-gray-200 p-0.5 flex items-center justify-center bg-white shadow-md overflow-hidden hover:scale-105 active:scale-95 transition-all">
+                <input
+                  type="color"
+                  id="custom-color"
+                  value={primaryColor}
+                  onChange={e => setValue('primary_color', e.target.value)}
+                  className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
+                  title="Custom color"
+                />
+                <Palette size={16} className="text-gray-500 pointer-events-none" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-2.5 text-sm text-gray-500">
+              <span className="font-semibold text-xs text-gray-400 uppercase tracking-wider">Preview:</span>
+              <span
+                className="px-4 py-1.5 rounded-2xl text-white font-bold text-xs shadow-sm"
+                style={{ backgroundColor: primaryColor }}
+              >
+                Your Menu Accent
+              </span>
+            </div>
+          </div>
+
+          {/* Save Button */}
+          <div className="pt-4">
+            <button
+              id="save-profile-btn"
+              type="submit"
+              disabled={saving}
+              className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 disabled:opacity-60 shadow-sm transition-all hover:scale-[1.02]"
+            >
+              {saving ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Save size={18} />
+                  <span>Save Profile Settings</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

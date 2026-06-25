@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
-const poppins = Poppins({
-  weight: ["300", "400", "500", "600", "700", "800"],
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-poppins",
+  variable: "--font-sans",
   display: "swap",
 });
 
@@ -21,10 +20,10 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
-}) {
+ }) {
   return (
-    <html lang="en" className={poppins.variable}>
-      <body className="font-poppins bg-white text-gray-900 antialiased">
+    <html lang="en" className={inter.variable}>
+      <body className="font-sans bg-white text-gray-900 antialiased">
         {children}
         <Toaster
           position="top-right"
@@ -35,7 +34,7 @@ export default function RootLayout({
               color: "#1a1a1a",
               boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
               borderRadius: "12px",
-              fontFamily: "var(--font-poppins)",
+              fontFamily: "var(--font-sans), system-ui, sans-serif",
               fontWeight: "500",
             },
             success: {
@@ -50,3 +49,4 @@ export default function RootLayout({
     </html>
   );
 }
+
