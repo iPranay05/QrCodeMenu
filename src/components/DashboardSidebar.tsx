@@ -4,11 +4,12 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import {
-  QrCode, LayoutDashboard, Utensils, Settings, LogOut, ChevronRight
+  QrCode, LayoutDashboard, Utensils, Settings, LogOut, ChevronRight, ClipboardList
 } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { href: '/dashboard/orders', label: 'Live Orders', icon: ClipboardList },
   { href: '/dashboard/menu', label: 'Menu Builder', icon: Utensils },
   { href: '/dashboard/profile', label: 'Profile', icon: Settings },
   { href: '/dashboard/qrcode', label: 'QR Code', icon: QrCode },

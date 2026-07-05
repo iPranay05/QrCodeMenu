@@ -27,7 +27,7 @@ export default function MenuBuilderPage() {
   const [itemSearchQuery, setItemSearchQuery] = useState('')
 
   const emptyItemForm = {
-    name: '', description: '', price: '', is_veg: true, is_available: true
+    name: '', description: '', price: '', ingredients: '', video_url: '', is_veg: true, is_available: true
   }
   const [itemForm, setItemForm] = useState(emptyItemForm)
 
@@ -201,6 +201,8 @@ export default function MenuBuilderPage() {
       restaurant_id: restaurant.id,
       name: itemForm.name.trim(),
       description: itemForm.description,
+      ingredients: itemForm.ingredients,
+      video_url: itemForm.video_url,
       price: parseFloat(itemForm.price) || 0,
       is_veg: itemForm.is_veg,
       is_available: itemForm.is_available,
@@ -224,6 +226,8 @@ export default function MenuBuilderPage() {
     const { error } = await supabase.from('menu_items').update({
       name: editingItem.name,
       description: editingItem.description,
+      ingredients: editingItem.ingredients,
+      video_url: editingItem.video_url,
       price: editingItem.price,
       is_veg: editingItem.is_veg,
       is_available: editingItem.is_available,
@@ -646,6 +650,24 @@ export default function MenuBuilderPage() {
                                   className="w-full px-3 py-2 rounded-xl glass-input text-xs text-gray-900 font-medium resize-none"
                                 />
                               </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-gray-500 mb-1 block">Ingredients</label>
+                                <input
+                                  value={editingItem.ingredients || ''}
+                                  onChange={e => setEditingItem(prev => prev ? { ...prev, ingredients: e.target.value } : prev)}
+                                  placeholder="e.g. Flour, Sugar, Butter..."
+                                  className="w-full px-3 py-2 rounded-xl glass-input text-xs text-gray-900 font-semibold"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-gray-500 mb-1 block">Video Link (YouTube/Vimeo)</label>
+                                <input
+                                  value={editingItem.video_url || ''}
+                                  onChange={e => setEditingItem(prev => prev ? { ...prev, video_url: e.target.value } : prev)}
+                                  placeholder="https://youtube.com/..."
+                                  className="w-full px-3 py-2 rounded-xl glass-input text-xs text-gray-900 font-semibold"
+                                />
+                              </div>
                               <div className="flex items-center gap-4">
                                 <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700 cursor-pointer">
                                   <input
@@ -791,6 +813,28 @@ export default function MenuBuilderPage() {
                         rows={2}
                         className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-gray-900 font-medium resize-none"
                       />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 mb-1.5 block">Ingredients</label>
+                        <input
+                          id="new-item-ingredients"
+                          value={itemForm.ingredients}
+                          onChange={e => setItemForm(prev => ({ ...prev, ingredients: e.target.value }))}
+                          placeholder="Flour, Sugar..."
+                          className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-gray-900 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 mb-1.5 block">Video Link (Optional)</label>
+                        <input
+                          id="new-item-video"
+                          value={itemForm.video_url}
+                          onChange={e => setItemForm(prev => ({ ...prev, video_url: e.target.value }))}
+                          placeholder="https://youtube.com/..."
+                          className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-gray-900 font-medium"
+                        />
+                      </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700 cursor-pointer">

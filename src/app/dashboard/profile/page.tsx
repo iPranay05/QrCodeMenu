@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Camera, Upload, Globe, Phone, MapPin, Palette, Save, Building2, Database, AlertTriangle, Sparkles } from 'lucide-react'
+import { Camera, Upload, Globe, Phone, MapPin, Palette, Save, Building2, Database, AlertTriangle, Sparkles, Plus, Trash2, Clock, Link as LinkIcon } from 'lucide-react'
 import type { Restaurant } from '@/lib/types'
 
 const schema = z.object({
@@ -15,12 +15,24 @@ const schema = z.object({
   phone: z.string().optional(),
   website: z.string().optional(),
   primary_color: z.string(),
+  theme: z.string().optional(),
+  opening_time: z.string().optional(),
+  closing_time: z.string().optional(),
+  live_url: z.string().optional(),
 })
 type FormData = z.infer<typeof schema>
 
 const COLOR_PRESETS = [
   '#6366F1', '#4F46E5', '#A855F7', '#EC4899',
   '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
+]
+
+const BG_PRESETS = [
+  { name: 'Elegant Dark', url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=2000&auto=format&fit=crop' },
+  { name: 'Dark Stone', url: 'https://images.unsplash.com/photo-1618318220023-108b982ce1e3?q=80&w=2000&auto=format&fit=crop' },
+  { name: 'Warm Wood', url: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?q=80&w=2000&auto=format&fit=crop' },
+  { name: 'Clean Marble', url: 'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?q=80&w=2000&auto=format&fit=crop' },
+  { name: 'Moody Spices', url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?q=80&w=2000&auto=format&fit=crop' }
 ]
 
 export default function ProfilePage() {
@@ -30,18 +42,22 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [logoUploading, setLogoUploading] = useState(false)
   const [coverUploading, setCoverUploading] = useState(false)
+  const [bgUploading, setBgUploading] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
+  const bgInputRef = useRef<HTMLInputElement>(null)
 
   const [dbError, setDbError] = useState<'tables_missing' | 'restaurant_missing' | null>(null)
   const [initName, setInitName] = useState('')
   const [creatingRest, setCreatingRest] = useState(false)
+  const [platforms, setPlatforms] = useState<{name: string, url: string}[]>([])
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { primary_color: '#6366F1' },
+    defaultValues: { primary_color: '#6366F1', theme: 'book' },
   })
   const primaryColor = watch('primary_color')
+  const selectedTheme = watch('theme')
 
   useEffect(() => {
     loadRestaurant()
@@ -86,7 +102,12 @@ export default function ProfilePage() {
           phone: data.phone || '',
           website: data.website || '',
           primary_color: data.primary_color || '#6366F1',
+          theme: data.theme || 'book',
+          opening_time: data.opening_time || '',
+          closing_time: data.closing_time || '',
+          live_url: data.live_url || '',
         })
+        setPlatforms(data.delivery_platforms || [])
       }
     } catch (err: any) {
       console.error('Unexpected loadRestaurant error:', err)
@@ -171,6 +192,19 @@ export default function ProfilePage() {
     setCoverUploading(false)
   }
 
+  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !restaurant) return
+    setBgUploading(true)
+    const url = await uploadImage(file, 'covers') // Using covers bucket for simplicity
+    if (url) {
+      await supabase.from('restaurants').update({ background_image_url: url }).eq('id', restaurant.id)
+      setRestaurant(prev => prev ? { ...prev, background_image_url: url } : prev)
+      toast.success('Background image updated!')
+    }
+    setBgUploading(false)
+  }
+
   const onSubmit = async (data: FormData) => {
     if (!restaurant) return
     setSaving(true)
@@ -181,6 +215,11 @@ export default function ProfilePage() {
       phone: data.phone,
       website: data.website,
       primary_color: data.primary_color,
+      theme: data.theme,
+      opening_time: data.opening_time,
+      closing_time: data.closing_time,
+      live_url: data.live_url,
+      delivery_platforms: platforms,
     }).eq('id', restaurant.id)
 
     if (error) toast.error(error.message)
@@ -414,6 +453,21 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
+
+            {/* Live URL Override */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-2">Custom Live URL (QR Code)</label>
+              <div className="relative">
+                <span className="absolute left-4 top-3.5 text-gray-400"><LinkIcon size={16} /></span>
+                <input
+                  {...register('live_url')}
+                  id="profile-live-url"
+                  className="w-full pl-11 pr-4 py-3 rounded-2xl glass-input text-sm text-gray-900 font-medium"
+                  placeholder="https://menu.yourrestaurant.com"
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Overrides the default QR code link</p>
+            </div>
           </div>
 
           {/* Address */}
@@ -428,6 +482,91 @@ export default function ProfilePage() {
                 placeholder="123 Food Street, Mumbai, India"
               />
             </div>
+          </div>
+
+          {/* Operating Hours */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-2">Opening Time</label>
+              <div className="relative">
+                <span className="absolute left-4 top-3.5 text-gray-400"><Clock size={16} /></span>
+                <input
+                  type="time"
+                  {...register('opening_time')}
+                  className="w-full pl-11 pr-4 py-3 rounded-2xl glass-input text-sm text-gray-900 font-medium"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-2">Closing Time</label>
+              <div className="relative">
+                <span className="absolute left-4 top-3.5 text-gray-400"><Clock size={16} /></span>
+                <input
+                  type="time"
+                  {...register('closing_time')}
+                  className="w-full pl-11 pr-4 py-3 rounded-2xl glass-input text-sm text-gray-900 font-medium"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Delivery Platforms */}
+          <div className="pt-2">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-semibold text-slate-600">Delivery Platforms</label>
+              <button
+                type="button"
+                onClick={() => setPlatforms([...platforms, { name: '', url: '' }])}
+                className="text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-colors"
+              >
+                <Plus size={14} /> Add Platform
+              </button>
+            </div>
+            {platforms.length === 0 ? (
+              <div className="text-sm text-gray-400 italic bg-gray-50 border border-dashed border-gray-200 rounded-xl p-4 text-center">
+                No delivery platforms added yet.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {platforms.map((platform, index) => (
+                  <div key={index} className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+                    <input
+                      type="text"
+                      placeholder="e.g. Zomato"
+                      value={platform.name}
+                      onChange={(e) => {
+                        const newPlatforms = [...platforms];
+                        newPlatforms[index].name = e.target.value;
+                        setPlatforms(newPlatforms);
+                      }}
+                      className="w-1/3 px-3 py-2 rounded-xl glass-input text-sm font-medium focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <input
+                      type="url"
+                      placeholder="Link to your restaurant page"
+                      value={platform.url}
+                      onChange={(e) => {
+                        const newPlatforms = [...platforms];
+                        newPlatforms[index].url = e.target.value;
+                        setPlatforms(newPlatforms);
+                      }}
+                      className="flex-1 px-3 py-2 rounded-xl glass-input text-sm font-medium focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newPlatforms = platforms.filter((_, i) => i !== index);
+                        setPlatforms(newPlatforms);
+                      }}
+                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                      title="Remove platform"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Brand Color */}
@@ -469,6 +608,120 @@ export default function ProfilePage() {
               </span>
             </div>
           </div>
+
+          <div className="pt-6 border-t border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Palette size={20} className="text-indigo-500" />
+              Theme & Branding
+            </h3>
+              <div className="col-span-full">
+                <label className="block text-sm font-semibold text-slate-600 mb-3">Menu Layout Theme</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                    { id: 'book', name: 'Classic Book', desc: 'Dual-page layout' },
+                    { id: 'modern', name: 'Modern List', desc: 'Clean, single-page list' },
+                    { id: 'grid', name: 'Photo Grid', desc: 'Visual, image-first gallery' }
+                  ].map((t) => (
+                    <div
+                      key={t.id}
+                      onClick={() => setValue('theme', t.id, { shouldDirty: true })}
+                      className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
+                        selectedTheme === t.id 
+                          ? 'border-indigo-500 bg-indigo-50/50 shadow-md scale-[1.02]' 
+                          : 'border-slate-200 hover:border-indigo-300 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-1">
+                        <span className="font-bold text-slate-800">{t.name}</span>
+                        {selectedTheme === t.id && (
+                          <div className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-sm">
+                            <span className="text-[10px]">✓</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500">{t.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="col-span-full mt-4">
+                <label className="block text-sm font-semibold text-slate-600 mb-3">Background Graphic</label>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+                  {BG_PRESETS.map((bg) => (
+                    <button
+                      key={bg.name}
+                      type="button"
+                      onClick={async () => {
+                        if (!restaurant) return;
+                        setBgUploading(true)
+                        const { error } = await supabase.from('restaurants').update({ background_image_url: bg.url }).eq('id', restaurant.id)
+                        if (error) { toast.error(error.message) } else {
+                          setRestaurant(prev => prev ? { ...prev, background_image_url: bg.url } : prev)
+                          toast.success('Background updated!')
+                        }
+                        setBgUploading(false)
+                      }}
+                      className={`relative h-20 rounded-xl overflow-hidden border-2 transition-all ${
+                        restaurant?.background_image_url === bg.url 
+                          ? 'border-indigo-500 shadow-md scale-[1.02]' 
+                          : 'border-transparent hover:border-indigo-300'
+                      }`}
+                    >
+                      <img src={bg.url} alt={bg.name} className="w-full h-full object-cover" />
+                      <div className="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm p-1.5 text-center">
+                        <span className="text-white text-[10px] font-bold tracking-wider uppercase">{bg.name}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {restaurant?.background_image_url && !BG_PRESETS.some(b => b.url === restaurant.background_image_url) && (
+                    <img 
+                      src={restaurant.background_image_url} 
+                      alt="Custom Bg" 
+                      className="w-12 h-12 rounded-lg object-cover border border-slate-200"
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => bgInputRef.current?.click()}
+                    disabled={bgUploading}
+                    className="flex-1 bg-white border-2 border-dashed border-slate-300 hover:border-indigo-400 text-slate-600 px-4 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-colors"
+                  >
+                    {bgUploading ? (
+                      <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Upload size={16} />
+                    )}
+                    <span className="text-xs truncate">{restaurant?.background_image_url ? 'Upload Custom' : 'Upload Graphic'}</span>
+                  </button>
+                  {restaurant?.background_image_url && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                         if (!restaurant) return;
+                         setBgUploading(true)
+                         const { error } = await supabase.from('restaurants').update({ background_image_url: null }).eq('id', restaurant.id)
+                         if (error) { toast.error(error.message) } else {
+                           setRestaurant(prev => prev ? { ...prev, background_image_url: null } : prev)
+                           toast.success('Background removed')
+                         }
+                         setBgUploading(false)
+                      }}
+                      disabled={bgUploading}
+                      className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-red-100 flex-shrink-0"
+                      title="Remove background"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                  <input ref={bgInputRef} type="file" accept="image/*" className="hidden" onChange={handleBgUpload} />
+                </div>
+              </div>
+            </div>
 
           {/* Save Button */}
           <div className="pt-4">

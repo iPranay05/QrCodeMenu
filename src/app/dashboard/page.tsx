@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import Link from 'next/link'
 import { QrCode, Utensils, Settings, ArrowRight, Layers, Eye, ShieldCheck, Sparkles, Plus } from 'lucide-react'
 import DashboardAnalytics from '@/components/DashboardAnalytics'
@@ -40,8 +41,13 @@ export default async function DashboardPage() {
     popularItems = data || []
   }
 
+  const headersList = await headers()
+  const host = headersList.get('host') || 'localhost:3000'
+  const protocol = headersList.get('x-forwarded-proto') || 'http'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (host.includes('localhost') ? `http://${host}` : `https://${host}`)
+
   const menuUrl = restaurant 
-    ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/menu/${restaurant.slug}` 
+    ? `${baseUrl}/menu/${restaurant.slug}` 
     : ''
 
   const quickActions = [

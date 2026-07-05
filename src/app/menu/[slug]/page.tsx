@@ -4,6 +4,9 @@ import type { Metadata } from 'next'
 import type { MenuCategoryWithItems, Restaurant } from '@/lib/types'
 import PublicMenuClient from './PublicMenuClient'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 type Props = { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
