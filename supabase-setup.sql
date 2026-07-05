@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS menu_items (
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT,
+  ingredients TEXT,
+  video_url TEXT,
   price NUMERIC(10,2) NOT NULL DEFAULT 0,
   image_url TEXT,
   is_available BOOLEAN DEFAULT TRUE,

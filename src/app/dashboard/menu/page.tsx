@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, Edit3, Save, X, ChevronDown, ChevronUp, Upload, Leaf, Drumstick, Database, AlertTriangle, Sparkles } from 'lucide-react'
+import { Plus, Trash2, Edit3, Save, X, ChevronDown, ChevronUp, Upload, Leaf, Drumstick, Database, AlertTriangle, Sparkles, Camera, Loader2 } from 'lucide-react'
 import type { Restaurant, MenuCategory, MenuItem } from '@/lib/types'
 
 export default function MenuBuilderPage() {
@@ -19,6 +19,9 @@ export default function MenuBuilderPage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null)
+  const [isScanning, setIsScanning] = useState(false)
+  const [scanProgress, setScanProgress] = useState('')
+  const scanInputRef = useRef<HTMLInputElement>(null)
   
   const [dbError, setDbError] = useState<'tables_missing' | 'restaurant_missing' | null>(null)
   const [initName, setInitName] = useState('')
@@ -27,7 +30,7 @@ export default function MenuBuilderPage() {
   const [itemSearchQuery, setItemSearchQuery] = useState('')
 
   const emptyItemForm = {
-    name: '', description: '', price: '', ingredients: '', video_url: '', is_veg: true, is_available: true
+    name: '', description: '', price: '', ingredients: '', video_url: '', is_veg: true, is_available: true, imageFile: null as File | null, imagePreview: null as string | null
   }
   const [itemForm, setItemForm] = useState(emptyItemForm)
 
@@ -196,6 +199,9 @@ export default function MenuBuilderPage() {
 
   const addItem = async (categoryId: string) => {
     if (!itemForm.name.trim() || !restaurant) return
+    setAddingItemFor(null) // Hide form immediately to show loading state if needed
+    
+    // First create the item without image
     const { data, error } = await supabase.from('menu_items').insert({
       category_id: categoryId,
       restaurant_id: restaurant.id,
@@ -209,16 +215,37 @@ export default function MenuBuilderPage() {
       display_order: categories.find(c => c.id === categoryId)?.menu_items.length || 0,
     }).select().single()
 
-    if (error) toast.error(error.message)
-    else {
-      setCategories(prev => prev.map(c => c.id === categoryId
-        ? { ...c, menu_items: [...c.menu_items, data as MenuItem] }
-        : c
-      ))
-      setItemForm(emptyItemForm)
-      setAddingItemFor(null)
-      toast.success('Item added!')
+    if (error) {
+      toast.error(error.message)
+      setAddingItemFor(categoryId) // Restore form on error
+      return
     }
+
+    let finalData = data as MenuItem
+
+    // If there's an image to upload, upload it now with the new item ID
+    if (itemForm.imageFile) {
+      const ext = itemForm.imageFile.name.split('.').pop()
+      const filename = `${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('menu-items').upload(filename, itemForm.imageFile, { upsert: true })
+      
+      if (!uploadError) {
+        const { data: { publicUrl } } = supabase.storage.from('menu-items').getPublicUrl(filename)
+        const { data: updatedData } = await supabase.from('menu_items').update({ image_url: publicUrl }).eq('id', finalData.id).select().single()
+        if (updatedData) {
+          finalData = updatedData as MenuItem
+        }
+      } else {
+        toast.error('Item created, but image upload failed')
+      }
+    }
+
+    setCategories(prev => prev.map(c => c.id === categoryId
+      ? { ...c, menu_items: [...c.menu_items, finalData] }
+      : c
+    ))
+    setItemForm(emptyItemForm)
+    toast.success('Item added!')
   }
 
   const updateItem = async () => {
@@ -269,8 +296,82 @@ export default function MenuBuilderPage() {
       ? { ...c, menu_items: c.menu_items.map(i => i.id === itemId ? { ...i, image_url: publicUrl } : i) }
       : c
     ))
+    setEditingItem(prev => (prev && prev.id === itemId) ? { ...prev, image_url: publicUrl } : prev)
     toast.success('Image uploaded!')
     setUploadingItemId(null)
+  }
+
+  const handleScanMenu = async (file: File) => {
+    if (!restaurant) return;
+    setIsScanning(true);
+    setScanProgress('Analyzing menu image...');
+    
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const res = await fetch('/api/extract-menu', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to parse menu');
+      }
+      
+      const data = await res.json();
+      const extractedCategories = data.categories || [];
+      
+      if (extractedCategories.length === 0) {
+        toast.error('No categories found in the image.');
+        return;
+      }
+
+      setScanProgress('Saving to database...');
+      let currentOrder = categories.length;
+      
+      for (const cat of extractedCategories) {
+        const { data: newCat, error: catError } = await supabase.from('menu_categories').insert({
+          restaurant_id: restaurant.id,
+          name: cat.name || 'Unnamed Category',
+          display_order: currentOrder++,
+        }).select().single();
+        
+        if (catError || !newCat) {
+          console.error('Error creating category:', catError);
+          continue;
+        }
+        
+        if (cat.items && cat.items.length > 0) {
+          const itemsToInsert = cat.items.map((item: any, index: number) => ({
+            category_id: newCat.id,
+            restaurant_id: restaurant.id,
+            name: item.name || 'Unnamed Item',
+            price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
+            description: item.description || '',
+            ingredients: item.ingredients || '',
+            is_veg: item.is_veg ?? true,
+            is_available: true,
+            display_order: index,
+          }));
+          
+          await supabase.from('menu_items').insert(itemsToInsert);
+        }
+      }
+      
+      toast.success('Menu scanned successfully! ✨');
+      setScanProgress('Reloading menu...');
+      await loadData();
+      
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Error scanning menu');
+    } finally {
+      setIsScanning(false);
+      setScanProgress('');
+      if (scanInputRef.current) scanInputRef.current.value = '';
+    }
   }
 
   const toggleCategory = (id: string) => {
@@ -381,11 +482,40 @@ export default function MenuBuilderPage() {
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Menu Builder</h1>
           <p className="text-gray-500 mt-1 text-sm font-medium">Create categories and menu items for your digital QR code menu.</p>
         </div>
-        {categories.length > 0 && (
-          <div className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100/50 px-4 py-2.5 rounded-2xl self-start sm:self-center shadow-sm">
-            {categories.reduce((acc, c) => acc + c.menu_items.length, 0)} items across {categories.length} categories
-          </div>
-        )}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <button
+            onClick={() => scanInputRef.current?.click()}
+            disabled={isScanning}
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-2xl font-bold shadow-md shadow-indigo-200 transition-all hover:scale-105 disabled:opacity-70 disabled:hover:scale-100"
+          >
+            {isScanning ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                <span className="text-sm">{scanProgress || 'Scanning...'}</span>
+              </>
+            ) : (
+              <>
+                <Camera size={18} />
+                <span className="text-sm">Scan Physical Menu ✨</span>
+              </>
+            )}
+          </button>
+          <input
+            ref={scanInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0];
+              if (file) handleScanMenu(file);
+            }}
+          />
+          {categories.length > 0 && (
+            <div className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100/50 px-4 py-2.5 rounded-2xl self-start sm:self-center shadow-sm whitespace-nowrap">
+              {categories.reduce((acc, c) => acc + c.menu_items.length, 0)} items across {categories.length} categories
+            </div>
+          )}
+        </div>
       </div>
 
       {categories.length === 0 ? (
@@ -668,6 +798,28 @@ export default function MenuBuilderPage() {
                                   className="w-full px-3 py-2 rounded-xl glass-input text-xs text-gray-900 font-semibold"
                                 />
                               </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-gray-500 mb-1 block">Photo</label>
+                                <div className="flex flex-col gap-2">
+                                  {editingItem.image_url ? (
+                                    <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-50 border border-slate-200 flex-shrink-0 group">
+                                      <img src={editingItem.image_url} alt="Current" className="w-full h-full object-cover" />
+                                    </div>
+                                  ) : null}
+                                  <button
+                                    onClick={() => {
+                                      if (fileInputRef.current) {
+                                        fileInputRef.current.dataset.itemId = editingItem.id
+                                        fileInputRef.current.dataset.categoryId = activeCategory.id
+                                        fileInputRef.current.click()
+                                      }
+                                    }}
+                                    className="text-xs bg-indigo-50 text-indigo-700 py-1.5 px-3 rounded-lg font-bold w-max hover:bg-indigo-100 transition-all"
+                                  >
+                                    {editingItem.image_url ? 'Change Photo' : 'Upload Photo'}
+                                  </button>
+                                </div>
+                              </div>
                               <div className="flex items-center gap-4">
                                 <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700 cursor-pointer">
                                   <input
@@ -833,6 +985,31 @@ export default function MenuBuilderPage() {
                           onChange={e => setItemForm(prev => ({ ...prev, video_url: e.target.value }))}
                           placeholder="https://youtube.com/..."
                           className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-gray-900 font-medium"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 mb-1.5 block">Photo (Optional)</label>
+                      <div className="flex items-center gap-4">
+                        {itemForm.imagePreview && (
+                          <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-50 border border-slate-200 flex-shrink-0">
+                            <img src={itemForm.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              setItemForm(prev => ({
+                                ...prev,
+                                imageFile: file,
+                                imagePreview: URL.createObjectURL(file)
+                              }))
+                            }
+                          }}
+                          className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                         />
                       </div>
                     </div>

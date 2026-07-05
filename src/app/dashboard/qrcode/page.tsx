@@ -28,11 +28,7 @@ export default function QrCodePage() {
   }, [])
 
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  const menuUrl = restaurant
-    ? (restaurant.live_url && (!restaurant.live_url.includes('localhost') || origin.includes('localhost'))
-        ? restaurant.live_url
-        : `${origin}/menu/${restaurant.slug}`)
-    : ''
+  const menuUrl = restaurant ? `${origin}/menu/${restaurant.slug}` : ''
 
   const copyUrl = () => {
     navigator.clipboard.writeText(menuUrl)

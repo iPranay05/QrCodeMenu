@@ -12,6 +12,22 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'restaurants' AND column_name = 'live_url') THEN
         ALTER TABLE restaurants ADD COLUMN live_url TEXT;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'restaurants' AND column_name = 'theme') THEN
+        ALTER TABLE restaurants ADD COLUMN theme TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'restaurants' AND column_name = 'background_image_url') THEN
+        ALTER TABLE restaurants ADD COLUMN background_image_url TEXT;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'menu_items' AND column_name = 'is_veg') THEN
+        ALTER TABLE menu_items ADD COLUMN is_veg BOOLEAN DEFAULT TRUE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'menu_items' AND column_name = 'ingredients') THEN
+        ALTER TABLE menu_items ADD COLUMN ingredients TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'menu_items' AND column_name = 'video_url') THEN
+        ALTER TABLE menu_items ADD COLUMN video_url TEXT;
+    END IF;
 END $$;
 
 CREATE TABLE IF NOT EXISTS orders (
