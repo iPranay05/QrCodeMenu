@@ -301,18 +301,47 @@ export default function MenuBuilderPage() {
     setUploadingItemId(null)
   }
 
+  const compressImage = (file: File, maxPx = 1024, quality = 0.8): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        if (width > maxPx || height > maxPx) {
+          if (width > height) { height = Math.round(height * maxPx / width); width = maxPx; }
+          else { width = Math.round(width * maxPx / height); height = maxPx; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas not supported')); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        // Return only the base64 part (strip "data:image/jpeg;base64,")
+        resolve(dataUrl.split(',')[1]);
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = url;
+    });
+  };
+
   const handleScanMenu = async (file: File) => {
     if (!restaurant) return;
     setIsScanning(true);
-    setScanProgress('Analyzing menu image...');
+    setScanProgress('Compressing image...');
     
     try {
-      const formData = new FormData();
-      formData.append('image', file);
+      const base64Data = await compressImage(file, 1024, 0.8);
+      console.log(`Compressed image size: ~${Math.round(base64Data.length * 0.75 / 1024)}KB`);
+
+      setScanProgress('Analyzing menu image...');
       
       const res = await fetch('/api/extract-menu', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64Data, mimeType: 'image/jpeg' }),
       });
       
       if (!res.ok) {
