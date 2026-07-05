@@ -53,26 +53,38 @@ export default function RegisterPage() {
       return
     }
 
-    // 2. Create the restaurant record
+    // 2. Create restaurant via server API (bypasses RLS, works even without confirmed email)
     const baseSlug = slugify(data.restaurantName)
     const slug = `${baseSlug}-${Math.random().toString(36).substring(2, 7)}`
 
-    const { error: restaurantError } = await supabase.from('restaurants').insert({
-      user_id: authData.user.id,
-      name: data.restaurantName,
-      slug,
-      primary_color: '#4F46E5',
+    const res = await fetch('/api/create-restaurant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: authData.user.id,
+        restaurantName: data.restaurantName,
+        slug,
+        primaryColor: '#4F46E5',
+      }),
     })
 
-    if (restaurantError) {
-      toast.error('Could not create restaurant profile: ' + restaurantError.message)
+    if (!res.ok) {
+      const err = await res.json()
+      toast.error('Could not create restaurant profile: ' + (err.error || 'Unknown error'))
       setLoading(false)
       return
     }
 
-    toast.success('Account created! Let\'s set up your menu 🎉')
-    router.push('/dashboard')
-    router.refresh()
+    // 3. Set session if available (for immediate dashboard access)
+    if (authData.session) {
+      await supabase.auth.setSession(authData.session)
+      toast.success('Account created! Let\'s set up your menu 🎉')
+      router.push('/dashboard')
+      router.refresh()
+    } else {
+      toast.success('Account created! Check your email to confirm, then sign in.')
+      router.push('/login')
+    }
   }
 
   return (
