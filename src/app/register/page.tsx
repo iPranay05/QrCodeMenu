@@ -8,13 +8,14 @@ import { z } from 'zod'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import Aurora from '@/components/ui/Aurora'
-import { QrCode, Mail, Lock, Eye, EyeOff, ArrowRight, Building2 } from 'lucide-react'
+import { QrCode, Mail, Lock, Eye, EyeOff, ArrowRight, Building2, Gift } from 'lucide-react'
 
 const schema = z.object({
   restaurantName: z.string().min(2, 'Restaurant name must be at least 2 characters'),
   email: z.string().email('Enter a valid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
+  referralCode: z.string().optional(),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
@@ -65,6 +66,7 @@ export default function RegisterPage() {
         restaurantName: data.restaurantName,
         slug,
         primaryColor: '#4F46E5',
+        referralCode: data.referralCode || '',
       }),
     })
 
@@ -174,6 +176,23 @@ export default function RegisterPage() {
                 />
               </div>
               {errors.confirmPassword && <p className="text-rose-500 text-xs mt-1.5 font-semibold pl-1">{errors.confirmPassword.message}</p>}
+            </div>
+
+            {/* Referral Code (optional) */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                <Gift size={12} className="text-indigo-400" />
+                Ambassador Referral Code
+                <span className="text-slate-400 normal-case font-medium ml-1">(optional)</span>
+              </label>
+              <input
+                {...register('referralCode')}
+                id="referralCode"
+                type="text"
+                placeholder="e.g. RAH-AB3XY"
+                className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-slate-900 placeholder-slate-400 bg-white uppercase tracking-wider font-mono"
+              />
+              <p className="text-slate-400 text-[11px] mt-1.5 font-medium">Got this from a student ambassador? Enter it here to credit them.</p>
             </div>
 
             {/* Submit */}

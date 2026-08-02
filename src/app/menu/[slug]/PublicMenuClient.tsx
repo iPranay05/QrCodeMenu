@@ -351,100 +351,96 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
   }
 
   const renderHeaderInfo = () => (
-    <div className="text-center">
+    <div className="flex items-center gap-3">
       {restaurant.logo_url && (
         <img
           src={restaurant.logo_url}
           alt={restaurant.name}
-          className="w-20 h-20 rounded-full object-cover mx-auto mb-4 shadow-md border-2 border-white"
+          className="w-12 h-12 rounded-full object-cover flex-shrink-0 shadow-sm border-2 border-white"
         />
       )}
-      <h1 className="font-cinzel text-3xl sm:text-4xl font-black text-neutral-900 tracking-wider leading-tight drop-shadow-sm">
-        {restaurant.name}
-      </h1>
-      {restaurant.tagline && (
-        <p className="font-display italic text-sm sm:text-base text-neutral-600 mt-2 font-medium">{restaurant.tagline}</p>
-      )}
-      
-      <div className="flex flex-wrap items-center justify-center gap-3 mt-4 text-[11px] sm:text-xs text-neutral-700 font-semibold">
-        {restaurant.address && (
-          <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-2.5 py-1.5 rounded-lg border border-neutral-200/60 shadow-sm">
-            <MapPin size={14} className="text-neutral-500" />
-            <span>{restaurant.address}</span>
-          </div>
-        )}
-        {restaurant.phone && (
-          <a href={`tel:${restaurant.phone}`} className="flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-2.5 py-1.5 rounded-lg border border-neutral-200/60 shadow-sm hover:text-indigo-600 transition-colors">
-            <Phone size={14} className="text-neutral-500" />
-            <span>{restaurant.phone}</span>
-          </a>
-        )}
-        {(restaurant.opening_time || restaurant.closing_time) && (
-          <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-2.5 py-1.5 rounded-lg border border-neutral-200/60 shadow-sm">
-            <Clock size={14} className="text-neutral-500" />
-            <span>
+      <div className="flex-1 min-w-0">
+        <h1 className="font-cinzel text-lg sm:text-xl font-black text-neutral-900 tracking-wide leading-tight truncate">
+          {restaurant.name}
+        </h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+          {restaurant.tagline && (
+            <span className="font-display italic text-[11px] text-neutral-500 font-medium">{restaurant.tagline}</span>
+          )}
+          {restaurant.address && (
+            <span className="flex items-center gap-1 text-[11px] text-neutral-500 font-medium">
+              <MapPin size={11} className="text-neutral-400 flex-shrink-0" />
+              {restaurant.address}
+            </span>
+          )}
+          {restaurant.phone && (
+            <a href={`tel:${restaurant.phone}`} className="flex items-center gap-1 text-[11px] text-neutral-500 font-medium hover:text-indigo-600 transition-colors">
+              <Phone size={11} className="text-neutral-400 flex-shrink-0" />
+              {restaurant.phone}
+            </a>
+          )}
+          {(restaurant.opening_time || restaurant.closing_time) && (
+            <span className="flex items-center gap-1 text-[11px] text-neutral-500 font-medium">
+              <Clock size={11} className="text-neutral-400 flex-shrink-0" />
               {restaurant.opening_time || '??'} - {restaurant.closing_time || '??'}
             </span>
-          </div>
-        )}
-      </div>
-
-      {restaurant.delivery_platforms && Array.isArray(restaurant.delivery_platforms) && restaurant.delivery_platforms.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 mt-5">
-          {restaurant.delivery_platforms.map((platform, idx) => (
-            <a
-              key={idx}
-              href={platform.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-white px-3 py-1.5 rounded-lg shadow-md transition-transform hover:scale-105 active:scale-95"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <Globe size={12} />
-              {platform.name}
-            </a>
-          ))}
+          )}
+          {restaurant.delivery_platforms && Array.isArray(restaurant.delivery_platforms) && restaurant.delivery_platforms.length > 0 && (
+            restaurant.delivery_platforms.map((platform, idx) => (
+              <a
+                key={idx}
+                href={platform.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-white px-2 py-0.5 rounded shadow-sm transition-transform hover:scale-105 active:scale-95"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <Globe size={10} />
+                {platform.name}
+              </a>
+            ))
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 
   const renderFilters = () => (
-    <div className="space-y-3 max-w-xl mx-auto w-full">
-      <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md border border-neutral-200/80 rounded-xl px-3 py-2.5 shadow-sm">
-        <Search size={18} className="text-neutral-400" />
+    <div className="flex gap-2 max-w-4xl w-full">
+      <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md border border-neutral-200/80 rounded-xl px-3 py-2 shadow-sm flex-1">
+        <Search size={15} className="text-neutral-400 flex-shrink-0" />
         <input
           type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Search menu..."
-          className="flex-1 bg-transparent text-sm sm:text-base focus:outline-none text-neutral-800 placeholder-neutral-400 font-medium"
+          className="flex-1 bg-transparent text-sm focus:outline-none text-neutral-800 placeholder-neutral-400 font-medium min-w-0"
         />
         {searchQuery && (
           <button onClick={() => setSearchQuery('')} className="text-neutral-400 hover:text-neutral-600">
-            <X size={16} />
+            <X size={14} />
           </button>
         )}
       </div>
       
-      <div className="flex bg-white/90 backdrop-blur-md rounded-xl border border-neutral-200/80 p-1 shadow-sm">
+      <div className="flex bg-white/90 backdrop-blur-md rounded-xl border border-neutral-200/80 p-1 shadow-sm flex-shrink-0">
         <button 
           onClick={() => setVegFilter('all')} 
-          className={`flex-1 text-xs sm:text-sm font-bold py-2 rounded-lg transition-colors ${vegFilter === 'all' ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-600 hover:bg-neutral-100'}`}
+          className={`px-3 text-xs font-bold py-1.5 rounded-lg transition-colors ${vegFilter === 'all' ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-600 hover:bg-neutral-100'}`}
         >
           All
         </button>
         <button 
           onClick={() => setVegFilter('veg')} 
-          className={`flex-1 text-xs sm:text-sm font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5 ${vegFilter === 'veg' ? 'bg-green-600 text-white shadow-sm' : 'text-green-700 hover:bg-green-50'}`}
+          className={`px-3 text-xs font-bold py-1.5 rounded-lg transition-colors flex items-center gap-1 ${vegFilter === 'veg' ? 'bg-green-600 text-white shadow-sm' : 'text-green-700 hover:bg-green-50'}`}
         >
-          <span className={`w-2 h-2 rounded-full ${vegFilter === 'veg' ? 'bg-white' : 'bg-green-600'}`} /> Veg
+          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${vegFilter === 'veg' ? 'bg-white' : 'bg-green-600'}`} /> Veg
         </button>
         <button 
           onClick={() => setVegFilter('nonveg')} 
-          className={`flex-1 text-xs sm:text-sm font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5 ${vegFilter === 'nonveg' ? 'bg-red-600 text-white shadow-sm' : 'text-red-700 hover:bg-red-50'}`}
+          className={`px-3 text-xs font-bold py-1.5 rounded-lg transition-colors flex items-center gap-1 ${vegFilter === 'nonveg' ? 'bg-red-600 text-white shadow-sm' : 'text-red-700 hover:bg-red-50'}`}
         >
-          <span className={`w-2 h-2 rounded-full ${vegFilter === 'nonveg' ? 'bg-white' : 'bg-red-600'}`} /> Non-Veg
+          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${vegFilter === 'nonveg' ? 'bg-white' : 'bg-red-600'}`} /> Non-Veg
         </button>
       </div>
     </div>
@@ -785,66 +781,71 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
   const renderModernOrGrid = (isGrid: boolean) => {
     return (
       <div 
-        className="min-h-screen bg-fixed bg-cover bg-center font-sans pb-24"
+        className="relative min-h-screen font-sans"
         style={{
-          backgroundImage: bgImage ? `url(${bgImage})` : undefined,
           backgroundColor: bgImage ? undefined : '#fdfbf7'
         }}
       >
-        <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] pointer-events-none" />
-        
-        <div className="relative z-10">
-          {/* Header */}
-          <div className="bg-white/80 backdrop-blur-xl border-b border-neutral-200/60 sticky top-0 z-40 shadow-sm">
-             <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
-                {renderHeaderInfo()}
-                <div className="mt-8">
-                  {renderFilters()}
-                </div>
-                {!searchQuery && (
-                  <div className="mt-6 -mx-4 sm:mx-0">
-                    {renderCategoryPills()}
-                  </div>
-                )}
-             </div>
-          </div>
+        {/* Fixed background layer */}
+        {bgImage && (
+          <div
+            className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
+            style={{ backgroundImage: `url(${bgImage})` }}
+          />
+        )}
+        {/* Subtle overlay */}
+        <div className="fixed inset-0 bg-white/50 -z-10 pointer-events-none" />
 
-          {/* Main Content */}
-          <div className="max-w-4xl mx-auto px-4 py-8">
-            {searchQuery ? (
-               <div>
-                  <h2 className="font-cinzel text-xl sm:text-2xl font-black text-neutral-800 tracking-wide uppercase mb-6 text-center">
-                    Search Results
-                  </h2>
-                  {globalMatchingItems.length === 0 ? (
-                    <div className="text-center py-12 bg-white/50 backdrop-blur-sm rounded-2xl border border-neutral-200/50 text-neutral-500 font-medium">
-                      No matching items found across the menu.
-                    </div>
-                  ) : (
-                    <div className={isGrid ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" : "space-y-3 bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-neutral-200/50 shadow-sm"}>
-                      {globalMatchingItems.map(({ item, categoryName }) => renderItemCard(item, categoryName, isGrid))}
-                    </div>
-                  )}
-               </div>
-            ) : (
-               <div>
-                  <h2 className="font-cinzel text-xl sm:text-2xl font-black text-neutral-800 tracking-wide uppercase mb-6 text-center flex items-center justify-center gap-4">
-                     <span className="h-[1px] flex-1 max-w-[60px] bg-neutral-300" />
-                     {activeCategoryData?.name}
-                     <span className="h-[1px] flex-1 max-w-[60px] bg-neutral-300" />
-                  </h2>
-                  {filteredActiveItems.length === 0 ? (
-                    <div className="text-center py-12 bg-white/50 backdrop-blur-sm rounded-2xl border border-neutral-200/50 text-neutral-500 font-medium">
-                      No items in this category matching preferences.
-                    </div>
-                  ) : (
-                    <div className={isGrid ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" : "space-y-3 bg-white/50 backdrop-blur-sm p-2 sm:p-4 rounded-3xl border border-neutral-200/50 shadow-sm"}>
-                      {filteredActiveItems.map(item => renderItemCard(item, undefined, isGrid))}
-                    </div>
-                  )}
-               </div>
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-neutral-200/60 shadow-sm">
+          <div className="max-w-4xl mx-auto px-4 py-3 sm:py-4">
+            {renderHeaderInfo()}
+            <div className="mt-3">
+              {renderFilters()}
+            </div>
+            {!searchQuery && (
+              <div className="mt-2 -mx-4 sm:mx-0">
+                {renderCategoryPills()}
+              </div>
             )}
           </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
+          {searchQuery ? (
+            <div>
+              <h2 className="font-cinzel text-xl sm:text-2xl font-black text-neutral-800 tracking-wide uppercase mb-6 text-center">
+                Search Results
+              </h2>
+              {globalMatchingItems.length === 0 ? (
+                <div className="text-center py-12 bg-white/60 backdrop-blur-sm rounded-2xl border border-neutral-200/50 text-neutral-500 font-medium">
+                  No matching items found across the menu.
+                </div>
+              ) : (
+                <div className={isGrid ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" : "space-y-3 bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-neutral-200/50 shadow-sm"}>
+                  {globalMatchingItems.map(({ item, categoryName }) => renderItemCard(item, categoryName, isGrid))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <h2 className="font-cinzel text-xl sm:text-2xl font-black text-neutral-800 tracking-wide uppercase mb-6 text-center flex items-center justify-center gap-4">
+                <span className="h-[1px] flex-1 max-w-[60px] bg-neutral-300" />
+                {activeCategoryData?.name}
+                <span className="h-[1px] flex-1 max-w-[60px] bg-neutral-300" />
+              </h2>
+              {filteredActiveItems.length === 0 ? (
+                <div className="text-center py-12 bg-white/60 backdrop-blur-sm rounded-2xl border border-neutral-200/50 text-neutral-500 font-medium">
+                  No items in this category matching preferences.
+                </div>
+              ) : (
+                <div className={isGrid ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" : "space-y-3 bg-white/60 backdrop-blur-sm p-2 sm:p-4 rounded-3xl border border-neutral-200/50 shadow-sm"}>
+                  {filteredActiveItems.map(item => renderItemCard(item, undefined, isGrid))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     )
