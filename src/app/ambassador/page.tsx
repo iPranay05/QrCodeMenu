@@ -1,8 +1,10 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { QrCode, User, Mail, Phone, GraduationCap, MapPin, ArrowRight, Copy, CheckCircle2, Star, Users, TrendingUp, Gift } from 'lucide-react'
 import toast from 'react-hot-toast'
+import Aurora from '@/components/ui/Aurora'
 
 interface FormState {
   name: string
@@ -43,9 +45,8 @@ export default function AmbassadorPage() {
       const data = await res.json()
       if (!res.ok) {
         if (res.status === 409 && data.referral_code) {
-          // Already registered — show their code
           setReferralCode(data.referral_code)
-          toast.success('You\'re already registered! Here\'s your code.')
+          toast.success("You're already registered! Here's your code.")
         } else {
           toast.error(data.error || 'Registration failed')
         }
@@ -69,69 +70,54 @@ export default function AmbassadorPage() {
   }
 
   const perks = [
-    { icon: <Gift size={20} className="text-violet-500" />, title: 'Earn per Referral', desc: 'Get rewarded every time a restaurant signs up with your code' },
-    { icon: <TrendingUp size={20} className="text-indigo-500" />, title: 'Track Your Growth', desc: 'See how many restaurants you\'ve brought on board in real-time' },
-    { icon: <Users size={20} className="text-emerald-500" />, title: 'Join the Network', desc: 'Be part of an exclusive community of campus ambassadors' },
-    { icon: <Star size={20} className="text-amber-500" />, title: 'Build Your Portfolio', desc: 'Gain real sales & marketing experience with a growing startup' },
+    { icon: <Gift size={18} className="text-indigo-600" />, title: 'Earn per Referral', desc: 'Get rewarded every time a restaurant signs up with your code' },
+    { icon: <TrendingUp size={18} className="text-violet-600" />, title: 'Track Your Growth', desc: 'See how many restaurants you\'ve brought on board in real-time' },
+    { icon: <Users size={18} className="text-emerald-600" />, title: 'Join the Network', desc: 'Be part of an exclusive community of campus ambassadors' },
+    { icon: <Star size={18} className="text-amber-500" />, title: 'Build Your Portfolio', desc: 'Gain real sales & marketing experience with a growing startup' },
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-950 font-sans">
-      {/* Ambient blobs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-[120px]" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-slate-800/30 rounded-full blur-[80px]" />
-      </div>
+    <Aurora showGrid={true} className="px-4 py-12">
+      <div className="w-full max-w-5xl mx-auto relative z-10 my-auto">
 
-      {/* Nav */}
-      <nav className="relative z-10 border-b border-white/5 bg-white/5 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
-              <QrCode className="w-5 h-5 text-white" />
+        {/* Header */}
+        <div className="text-center mb-10">
+          <Link href="/" className="inline-flex items-center gap-3 mb-6 hover:scale-105 transition-transform duration-300">
+            <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center shadow-sm">
+              <QrCode className="w-6 h-6 text-white animate-pulse" />
             </div>
-            <span className="text-white font-black text-lg tracking-tight">MenuQR</span>
+            <span className="text-2xl font-black text-slate-800 tracking-tight">MenuQR</span>
           </Link>
-          <Link href="/login" className="text-white/60 hover:text-white text-sm font-semibold transition-colors">
-            Restaurant Login →
-          </Link>
+          <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-600 px-4 py-1.5 rounded-full text-xs font-bold mb-4 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse" />
+            Campus Ambassador Program
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black text-slate-800 tracking-tight leading-tight mb-3">
+            Turn referrals into <span className="gradient-text">rewards</span> ✨
+          </h1>
+          <p className="text-slate-500 text-base font-medium max-w-xl mx-auto">
+            Register, get your unique referral code, share it with restaurant owners, and earn every time they sign up.
+          </p>
         </div>
-      </nav>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 sm:py-20">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
 
-          {/* Left — Info */}
+          {/* Left — Perks */}
           <div>
-            <div className="inline-flex items-center gap-2 bg-violet-500/15 border border-violet-400/20 text-violet-300 px-3 py-1.5 rounded-full text-xs font-bold mb-6 uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-pulse" />
-              Campus Ambassador Program
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl font-black text-white leading-tight mb-4">
-              Turn your campus into a
-              <span className="bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent"> revenue stream</span>
-            </h1>
-
-            <p className="text-white/60 text-base sm:text-lg font-medium leading-relaxed mb-10">
-              Refer restaurants to MenuQR, earn rewards, and build real-world startup experience — all while studying.
-            </p>
-
-            <div className="grid sm:grid-cols-2 gap-4 mb-10">
+            <div className="grid sm:grid-cols-2 gap-4 mb-6">
               {perks.map((perk, i) => (
-                <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/8 transition-colors backdrop-blur-sm">
-                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center mb-3">
+                <div key={i} className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                  <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center mb-3 border border-slate-100">
                     {perk.icon}
                   </div>
-                  <h3 className="text-white font-bold text-sm mb-1">{perk.title}</h3>
-                  <p className="text-white/50 text-xs leading-relaxed">{perk.desc}</p>
+                  <h3 className="font-extrabold text-slate-800 text-sm mb-1">{perk.title}</h3>
+                  <p className="text-slate-500 text-xs font-medium leading-relaxed">{perk.desc}</p>
                 </div>
               ))}
             </div>
 
-            <div className="bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-400/20 rounded-2xl p-5 text-white/70 text-sm font-medium leading-relaxed">
-              💡 <strong className="text-white">How it works:</strong> Register below → get your personal referral code → share it with restaurant owners → they enter it when signing up → you earn!
+            <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 text-slate-700 text-sm font-medium leading-relaxed">
+              💡 <strong className="text-slate-800">How it works:</strong> Register below → get your personal referral code → share it with restaurant owners → they enter it when signing up → you earn!
             </div>
           </div>
 
@@ -139,26 +125,26 @@ export default function AmbassadorPage() {
           <div>
             {referralCode ? (
               /* SUCCESS CARD */
-              <div className="bg-white/8 backdrop-blur-xl border border-white/15 rounded-3xl p-8 sm:p-10 text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
-                  <CheckCircle2 size={40} className="text-white" />
+              <div className="bg-white rounded-3xl shadow-[0_24px_64px_rgba(15,23,42,0.06)] p-8 sm:p-10 border border-slate-200/80 text-center">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5">
+                  <CheckCircle2 size={32} className="text-emerald-600" />
                 </div>
-                <h2 className="text-white text-2xl sm:text-3xl font-black mb-2">You're in! 🎉</h2>
-                <p className="text-white/60 text-sm font-medium mb-8">
+                <h2 className="text-slate-800 text-2xl font-black mb-2">You're in! 🎉</h2>
+                <p className="text-slate-500 text-sm font-medium mb-8">
                   Share this code with restaurant owners when they sign up on MenuQR.
                 </p>
 
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6">
-                  <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">Your Referral Code</p>
-                  <div className="text-4xl sm:text-5xl font-black text-white tracking-widest font-mono mb-4">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 mb-6">
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">Your Referral Code</p>
+                  <div className="text-4xl sm:text-5xl font-black text-slate-800 tracking-widest font-mono mb-5">
                     {referralCode}
                   </div>
                   <button
                     onClick={copyCode}
-                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
+                    className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
                       copied
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-white/10 text-white hover:bg-white/20 border border-white/10'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-900 hover:bg-slate-800 text-white'
                     }`}
                   >
                     {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
@@ -166,110 +152,107 @@ export default function AmbassadorPage() {
                   </button>
                 </div>
 
-                <p className="text-white/40 text-xs font-medium">
+                <p className="text-slate-400 text-xs font-medium">
                   Restaurant owners enter this code in the "Ambassador Referral Code" field when creating their MenuQR account.
                 </p>
 
-                <div className="mt-8 pt-6 border-t border-white/10">
-                  <Link
-                    href="/"
-                    className="text-indigo-400 hover:text-indigo-300 text-sm font-bold transition-colors"
-                  >
+                <div className="mt-8 pt-6 border-t border-slate-100">
+                  <Link href="/" className="text-indigo-600 hover:text-indigo-700 text-sm font-bold transition-colors">
                     ← Back to MenuQR Home
                   </Link>
                 </div>
               </div>
             ) : (
               /* REGISTRATION FORM */
-              <div className="bg-white/8 backdrop-blur-xl border border-white/15 rounded-3xl p-8 sm:p-10">
-                <h2 className="text-white text-2xl font-black mb-1">Register as Ambassador</h2>
-                <p className="text-white/50 text-sm font-medium mb-8">Fill in your details to get your unique referral code instantly.</p>
+              <div className="bg-white rounded-3xl shadow-[0_24px_64px_rgba(15,23,42,0.06)] p-8 sm:p-10 border border-slate-200/80">
+                <h2 className="text-slate-800 text-xl font-black mb-1">Register as Ambassador</h2>
+                <p className="text-slate-500 text-sm font-medium mb-7">Fill in your details to get your unique referral code instantly.</p>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Name */}
                   <div>
-                    <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Full Name</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Full Name</label>
                     <div className="relative">
-                      <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                      <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
                         type="text"
                         value={form.name}
                         onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                         placeholder="Rahul Sharma"
-                        className="w-full bg-white/8 border border-white/10 focus:border-indigo-400/60 focus:ring-1 focus:ring-indigo-400/30 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/25 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-slate-900 placeholder-slate-400 bg-white"
                       />
                     </div>
-                    {errors.name && <p className="text-rose-400 text-xs mt-1.5 font-semibold">{errors.name}</p>}
+                    {errors.name && <p className="text-rose-500 text-xs mt-1.5 font-semibold pl-1">{errors.name}</p>}
                   </div>
 
                   {/* Email */}
                   <div>
-                    <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Email Address</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Email Address</label>
                     <div className="relative">
-                      <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                      <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
                         type="email"
                         value={form.email}
                         onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                         placeholder="rahul@college.edu"
-                        className="w-full bg-white/8 border border-white/10 focus:border-indigo-400/60 focus:ring-1 focus:ring-indigo-400/30 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/25 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-slate-900 placeholder-slate-400 bg-white"
                       />
                     </div>
-                    {errors.email && <p className="text-rose-400 text-xs mt-1.5 font-semibold">{errors.email}</p>}
+                    {errors.email && <p className="text-rose-500 text-xs mt-1.5 font-semibold pl-1">{errors.email}</p>}
                   </div>
 
                   {/* Phone */}
                   <div>
-                    <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Phone Number</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Phone Number</label>
                     <div className="relative">
-                      <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                      <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
                         type="tel"
                         value={form.phone}
                         onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
                         placeholder="+91 98765 43210"
-                        className="w-full bg-white/8 border border-white/10 focus:border-indigo-400/60 focus:ring-1 focus:ring-indigo-400/30 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/25 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-slate-900 placeholder-slate-400 bg-white"
                       />
                     </div>
-                    {errors.phone && <p className="text-rose-400 text-xs mt-1.5 font-semibold">{errors.phone}</p>}
+                    {errors.phone && <p className="text-rose-500 text-xs mt-1.5 font-semibold pl-1">{errors.phone}</p>}
                   </div>
 
                   {/* College */}
                   <div>
-                    <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-2">College / Institution</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">College / Institution</label>
                     <div className="relative">
-                      <GraduationCap size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                      <GraduationCap size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
                         type="text"
                         value={form.college}
                         onChange={e => setForm(f => ({ ...f, college: e.target.value }))}
                         placeholder="IIT Bombay / Delhi University..."
-                        className="w-full bg-white/8 border border-white/10 focus:border-indigo-400/60 focus:ring-1 focus:ring-indigo-400/30 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/25 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-slate-900 placeholder-slate-400 bg-white"
                       />
                     </div>
-                    {errors.college && <p className="text-rose-400 text-xs mt-1.5 font-semibold">{errors.college}</p>}
+                    {errors.college && <p className="text-rose-500 text-xs mt-1.5 font-semibold pl-1">{errors.college}</p>}
                   </div>
 
                   {/* City */}
                   <div>
-                    <label className="block text-xs font-bold text-white/50 uppercase tracking-wider mb-2">City</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">City</label>
                     <div className="relative">
-                      <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                      <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input
                         type="text"
                         value={form.city}
                         onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
                         placeholder="Mumbai, Delhi, Bangalore..."
-                        className="w-full bg-white/8 border border-white/10 focus:border-indigo-400/60 focus:ring-1 focus:ring-indigo-400/30 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/25 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-slate-900 placeholder-slate-400 bg-white"
                       />
                     </div>
-                    {errors.city && <p className="text-rose-400 text-xs mt-1.5 font-semibold">{errors.city}</p>}
+                    {errors.city && <p className="text-rose-500 text-xs mt-1.5 font-semibold pl-1">{errors.city}</p>}
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white font-black py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-60 shadow-lg shadow-indigo-500/25 mt-2"
+                    className="bg-slate-900 hover:bg-slate-800 text-white w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors duration-200 mt-2 cursor-pointer shadow-sm"
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -282,14 +265,19 @@ export default function AmbassadorPage() {
                   </button>
                 </form>
 
-                <p className="text-white/30 text-xs text-center mt-6 font-medium">
-                  By registering, you agree to represent MenuQR professionally.
-                </p>
+                <div className="mt-8 text-center border-t border-slate-100 pt-6">
+                  <p className="text-slate-500 text-sm font-semibold">
+                    Already a restaurant owner?{' '}
+                    <Link href="/register" className="text-indigo-600 font-bold hover:text-indigo-700 transition-colors">
+                      Create restaurant account →
+                    </Link>
+                  </p>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </Aurora>
   )
 }

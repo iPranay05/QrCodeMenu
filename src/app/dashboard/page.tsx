@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import Link from 'next/link'
-import { QrCode, Utensils, Settings, ArrowRight, Layers, Eye, ShieldCheck, Sparkles, Plus } from 'lucide-react'
+import { QrCode, Utensils, Settings, ArrowRight, Layers, ShieldCheck, Sparkles, Plus, ClipboardList } from 'lucide-react'
 import DashboardAnalytics from '@/components/DashboardAnalytics'
 
 export default async function DashboardPage() {
@@ -26,6 +26,11 @@ export default async function DashboardPage() {
 
   const { count: itemCount } = await supabase
     .from('menu_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('restaurant_id', restaurant?.id || '')
+
+  const { count: orderCount } = await supabase
+    .from('orders')
     .select('*', { count: 'exact', head: true })
     .eq('restaurant_id', restaurant?.id || '')
 
@@ -57,7 +62,7 @@ export default async function DashboardPage() {
   ]
 
   const stats = [
-    { label: 'Total Scans', value: restaurant ? '2,380' : '0', change: '+14%', icon: Eye, color: 'text-indigo-600', bg: 'bg-indigo-50 border border-indigo-100/50' },
+    { label: 'Orders Received', value: orderCount ?? 0, change: null, icon: ClipboardList, color: 'text-indigo-600', bg: 'bg-indigo-50 border border-indigo-100/50' },
     { label: 'Categories', value: categoryCount ?? 0, change: null, icon: Layers, color: 'text-slate-600', bg: 'bg-slate-50 border border-slate-200/50' },
     { label: 'Menu Items', value: itemCount ?? 0, change: null, icon: Utensils, color: 'text-indigo-500', bg: 'bg-indigo-50 border border-indigo-100/30' },
     { label: 'Menu Status', value: restaurant ? 'Live' : 'Setup Needed', change: null, icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50 border border-emerald-100/50' },

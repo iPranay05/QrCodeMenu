@@ -4,7 +4,6 @@ import { createClient } from '@supabase/supabase-js'
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'menuqr-admin-2025'
 
 export async function GET(req: Request) {
-  // Simple key-based auth
   const key = req.headers.get('x-admin-key')
   if (key !== ADMIN_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -16,7 +15,6 @@ export async function GET(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Get all ambassadors
     const { data: ambassadors, error } = await supabaseAdmin
       .from('ambassadors')
       .select('*')
@@ -26,19 +24,24 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // For each ambassador, count how many restaurants used their code
-    const ambassadorsWithCounts = await Promise.all(
+    // For each ambassador, fetch the full restaurant records they referred
+    const ambassadorsWithRestaurants = await Promise.all(
       (ambassadors || []).map(async (amb) => {
-        const { count } = await supabaseAdmin
+        const { data: restaurants } = await supabaseAdmin
           .from('restaurants')
-          .select('*', { count: 'exact', head: true })
+          .select('id, name, slug, phone, address, created_at, primary_color, logo_url')
           .eq('referral_code', amb.referral_code)
+          .order('created_at', { ascending: false })
 
-        return { ...amb, referral_count: count || 0 }
+        return {
+          ...amb,
+          referral_count: restaurants?.length || 0,
+          restaurants: restaurants || [],
+        }
       })
     )
 
-    return NextResponse.json({ ambassadors: ambassadorsWithCounts })
+    return NextResponse.json({ ambassadors: ambassadorsWithRestaurants })
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 })
   }
