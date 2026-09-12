@@ -16,6 +16,10 @@ export interface Restaurant {
   closing_time: string | null
   delivery_platforms: { name: string; url: string }[] | null
   live_url: string | null
+  referral_code: string | null
+  subscription_status: 'trial' | 'active' | 'expired' | 'grace' | null
+  subscription_expires_at: string | null
+  trial_ends_at: string | null
   created_at: string
   updated_at: string
 }

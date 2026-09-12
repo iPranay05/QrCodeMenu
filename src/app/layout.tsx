@@ -14,6 +14,21 @@ export const metadata: Metadata = {
   description:
     "Create beautiful digital menus for your restaurant. Generate a QR code and let customers browse your menu on their phone.",
   keywords: "restaurant menu, QR code menu, digital menu, online menu",
+  openGraph: {
+    title: 'MenuQR — Digital Menus for Restaurants',
+    description: 'Create beautiful digital menus for your restaurant. Generate a QR code and let customers browse your menu on their phone.',
+    url: 'https://menuqr.com',
+    siteName: 'MenuQR',
+    images: [
+      {
+        url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1200&auto=format&fit=crop', // Temporary OG image placeholder
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: 'en_IN',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({

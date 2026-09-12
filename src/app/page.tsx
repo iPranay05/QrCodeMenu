@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Aurora from '@/components/ui/Aurora'
-import { QrCode, Utensils, Smartphone, Palette, Star, ChevronRight, CheckCircle, ArrowRight } from 'lucide-react'
+import { QrCode, Utensils, Smartphone, Palette, ChevronRight, CheckCircle, ArrowRight } from 'lucide-react'
 
 export default function HomePage() {
   const features = [
@@ -39,12 +39,6 @@ export default function HomePage() {
     { num: '04', title: 'Share QR Code', desc: 'Download the QR code and display it on tables!' },
   ]
 
-  const testimonials = [
-    { name: 'Arjun Mehta', role: 'Owner, Spice Garden', text: 'Our customers love scanning the QR and seeing our beautiful menu. Setup took 10 minutes!', stars: 5 },
-    { name: 'Priya Sharma', role: 'Manager, The Curry House', text: 'We update our menu instantly — no more reprinting costs. Absolutely love it.', stars: 5 },
-    { name: 'Carlos Rivera', role: 'Chef & Owner, El Sabor', text: 'Professional, fast, beautiful menus. My international guests are always impressed.', stars: 5 },
-  ]
-
   return (
     <Aurora>
       <Navbar />
@@ -54,7 +48,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-600 px-4 py-1.5 rounded-full text-xs font-bold mb-6">
             <span className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse" />
-            100% Free to Get Started
+            3-Day Free Trial — No Credit Card Needed
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight mb-6 leading-tight">
@@ -73,7 +67,7 @@ export default function HomePage() {
               href="/register"
               className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white px-8 py-4 rounded-xl font-bold text-sm shadow-md flex items-center justify-center gap-2 hover:scale-[1.01] transition-all cursor-pointer"
             >
-              <span>Create Your Menu Free</span>
+              <span>Start Free Trial — 3 Days</span>
               <ChevronRight size={18} />
             </Link>
             <Link
@@ -132,24 +126,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats Strip */}
-      <section className="py-10 px-4 relative z-10">
-        <div className="max-w-4xl mx-auto bg-white border border-slate-200 shadow-sm rounded-3xl p-6 md:p-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { val: '5K+', label: 'Restaurants', color: 'text-indigo-600' },
-              { val: '2M+', label: 'Menu Scans', color: 'text-violet-600' },
-              { val: '100%', label: 'Free Setup', color: 'text-emerald-600' },
-              { val: '4.9★', label: 'Rating', color: 'text-amber-500' },
-            ].map((s, i) => (
-              <div key={i} className="group">
-                <div className={`text-2xl md:text-3xl font-black ${s.color} transition-transform duration-300 group-hover:scale-105`}>{s.val}</div>
-                <div className="text-slate-500 font-bold text-xs mt-1">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Features Section */}
       <section id="features" className="py-16 px-4 relative z-10">
@@ -202,37 +178,57 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-16 px-4 relative z-10">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-800 leading-tight">Loved by restaurants <span className="gradient-text">worldwide</span> 🌍</h2>
+      {/* Pricing Section */}
+      <section id="pricing" className="py-16 px-4 relative z-10">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="text-indigo-600 font-extrabold text-xs uppercase tracking-widest mb-2">Pricing</div>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-800 leading-tight">
+              Simple, <span className="gradient-text">honest pricing</span>
+            </h2>
+            <p className="text-slate-500 text-sm sm:text-base font-medium mt-3 max-w-md mx-auto">
+              Start free for 3 days. Then just ₹100 every 3 months — less than a cup of chai a month.
+            </p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-5">
-            {testimonials.map((t, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300">
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: t.stars }).map((_, j) => (
-                    <Star key={j} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-slate-600 leading-relaxed font-medium text-xs sm:text-sm mb-4 italic">"{t.text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 font-extrabold text-sm border border-slate-200">
-                    {t.name[0]}
-                  </div>
-                  <div>
-                    <div className="font-extrabold text-slate-800 text-xs">{t.name}</div>
-                    <div className="text-slate-500 text-[10px] font-bold mt-0.5">{t.role}</div>
-                  </div>
+
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-[0_8px_40px_rgba(15,23,42,0.06)] overflow-hidden max-w-md mx-auto">
+            <div className="bg-slate-900 px-8 pt-8 pb-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.3),transparent_60%)]" />
+              <div className="relative z-10">
+                <div className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">MenuQR Plan</div>
+                <div className="flex items-end gap-2">
+                  <span className="text-5xl font-black text-white">₹100</span>
+                  <span className="text-slate-400 text-sm font-semibold mb-2">/ 3 months</span>
                 </div>
               </div>
-            ))}
+            </div>
+            <div className="p-8">
+              <ul className="space-y-3 mb-8">
+                {[
+                  'Unlimited menu items & categories',
+                  'Branded QR code & mobile menu page',
+                  'Real-time order management',
+                  'AI menu extraction from photos',
+                  'Custom branding & themes',
+                  '3-day free trial to start',
+                ].map(f => (
+                  <li key={f} className="flex items-center gap-3 text-slate-700 text-sm font-medium">
+                    <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/register"
+                className="block w-full bg-slate-900 hover:bg-slate-800 text-white text-center py-3.5 rounded-xl font-bold text-sm transition-all"
+              >
+                Start 3-Day Free Trial
+              </Link>
+              <p className="text-slate-400 text-xs text-center mt-3 font-medium">No credit card required to start</p>
+            </div>
           </div>
         </div>
       </section>
-
       {/* CTA Section */}
       <section className="py-16 px-4 relative z-10">
         <div className="max-w-3xl mx-auto bg-slate-900 rounded-3xl p-8 md:p-12 text-center text-white relative overflow-hidden shadow-sm">
@@ -250,13 +246,13 @@ export default function HomePage() {
               href="/register"
               className="w-full sm:w-auto bg-white text-slate-900 hover:bg-slate-50 px-8 py-4 rounded-xl font-bold text-sm transition-all shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Start for Free</span>
+              <span>Start Free Trial</span>
               <ArrowRight size={16} />
             </Link>
           </div>
           
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8 text-slate-500 text-xs font-semibold relative z-10">
-            {['No credit card', 'Setup in minutes', 'Cancel anytime'].map((item, i) => (
+            {['3-day free trial', 'Then ₹100/3 months', 'Cancel anytime'].map((item, i) => (
               <div key={i} className="flex items-center gap-1.5">
                 <CheckCircle size={14} className="text-indigo-500" />
                 {item}
@@ -275,10 +271,12 @@ export default function HomePage() {
             </div>
             <span className="text-slate-800 font-extrabold text-base">MenuQR</span>
           </div>
-          <p className="text-xs text-slate-500 font-medium">© 2025 MenuQR. All rights reserved.</p>
+          <p className="text-xs text-slate-500 font-medium">© {new Date().getFullYear()} MenuQR. All rights reserved.</p>
           <div className="flex gap-6 text-xs font-bold">
             <Link href="/login" className="text-slate-600 hover:text-indigo-600 transition-colors">Login</Link>
             <Link href="/register" className="text-slate-600 hover:text-indigo-600 transition-colors">Register</Link>
+            <Link href="/terms" className="text-slate-600 hover:text-indigo-600 transition-colors">Terms</Link>
+            <Link href="/privacy" className="text-slate-600 hover:text-indigo-600 transition-colors">Privacy</Link>
           </div>
         </div>
       </footer>

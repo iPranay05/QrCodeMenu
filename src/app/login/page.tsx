@@ -43,19 +43,20 @@ export default function LoginPage() {
   }
 
   return (
-    <Aurora showGrid={true} className="flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md relative z-10 my-auto">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-3 mb-6 hover:scale-105 transition-transform duration-300">
-            <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center shadow-sm">
-              <QrCode className="w-6 h-6 text-white animate-pulse" />
-            </div>
-            <span className="text-2xl font-black text-slate-800 tracking-tight">MenuQR</span>
-          </Link>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Welcome back! 👋</h1>
-          <p className="text-slate-500 mt-2 text-sm font-medium">Sign in to manage your restaurant menu</p>
-        </div>
+    <Aurora showGrid={true}>
+      <div className="w-full min-h-screen flex flex-col items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md mx-auto relative z-10">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-flex items-center gap-3 mb-6 hover:scale-105 transition-transform duration-300">
+              <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center shadow-sm">
+                <QrCode className="w-6 h-6 text-white animate-pulse" />
+              </div>
+              <span className="text-2xl font-black text-slate-800 tracking-tight">MenuQR</span>
+            </Link>
+            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Welcome back! 👋</h1>
+            <p className="text-slate-500 mt-2 text-sm font-medium">Sign in to manage your restaurant menu</p>
+          </div>
 
         {/* Form Card */}
         <div className="bg-white rounded-3xl shadow-[0_24px_64px_rgba(15,23,42,0.04)] p-8 sm:p-10 border border-slate-200/80">
@@ -126,6 +127,7 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
+      </div>
       </div>
     </Aurora>
   )

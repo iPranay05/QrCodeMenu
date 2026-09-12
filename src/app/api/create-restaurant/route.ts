@@ -15,12 +15,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
 
-    const insertData: Record<string, any> = {
+    const trialEndsAt = new Date()
+    trialEndsAt.setDate(trialEndsAt.getDate() + 3)
+
+    const insertData: Record<string, unknown> = {
       user_id: userId,
       name: restaurantName,
       slug,
       primary_color: primaryColor || '#4F46E5',
-    };
+      subscription_status: 'trial',
+      trial_ends_at: trialEndsAt.toISOString(),
+    }
 
     // Only attach referral code if provided and non-empty
     if (referralCode && referralCode.trim()) {

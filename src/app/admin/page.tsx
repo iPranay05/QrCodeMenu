@@ -8,8 +8,6 @@ import {
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 
-const ADMIN_KEY = 'menuqr-admin-2025'
-
 interface ReferredRestaurant {
   id: string
   name: string
@@ -251,15 +249,31 @@ export default function AdminPage() {
   const [ambSort, setAmbSort] = useState<'date' | 'referrals'>('date')
   const [restSort, setRestSort] = useState<'date' | 'name'>('date')
 
-  const login = () => {
-    if (password === ADMIN_KEY) { setAuthed(true); setPwError(false) }
-    else { setPwError(true); toast.error('Incorrect admin password') }
+  const login = async () => {
+    try {
+      const res = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      })
+      const data = await res.json()
+      
+      if (data.success) {
+        setAuthed(true)
+        setPwError(false)
+      } else {
+        setPwError(true)
+        toast.error('Incorrect admin password')
+      }
+    } catch (err) {
+      toast.error('Login failed')
+    }
   }
 
   const fetchAmbassadors = async () => {
     setLoadingAmb(true)
     try {
-      const res = await fetch('/api/admin/ambassadors', { headers: { 'x-admin-key': ADMIN_KEY } })
+      const res = await fetch('/api/admin/ambassadors', { headers: { 'x-admin-key': password } })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setAmbassadors(data.ambassadors || [])
@@ -270,7 +284,7 @@ export default function AdminPage() {
   const fetchRestaurants = async () => {
     setLoadingRest(true)
     try {
-      const res = await fetch('/api/admin/restaurants', { headers: { 'x-admin-key': ADMIN_KEY } })
+      const res = await fetch('/api/admin/restaurants', { headers: { 'x-admin-key': password } })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setRestaurants(data.restaurants || [])

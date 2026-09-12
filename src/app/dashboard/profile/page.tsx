@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Camera, Upload, Globe, Phone, MapPin, Palette, Save, Building2, Database, AlertTriangle, Sparkles, Plus, Trash2, Clock, Link as LinkIcon } from 'lucide-react'
+import { Camera, Upload, Globe, Phone, MapPin, Palette, Save, Building2, Database, AlertTriangle, Sparkles, Plus, Trash2, Clock, Link as LinkIcon, CreditCard, Crown, Zap } from 'lucide-react'
 import type { Restaurant } from '@/lib/types'
 
 const schema = z.object({
@@ -317,10 +317,20 @@ export default function ProfilePage() {
     )
   }
 
+  // Compute subscription status for the card
+  const subStatus = restaurant?.subscription_status
+  const trialEnd = restaurant?.trial_ends_at ? new Date(restaurant.trial_ends_at) : null
+  const subEnd = restaurant?.subscription_expires_at ? new Date(restaurant.subscription_expires_at) : null
+  const now = new Date()
+  const trialDaysLeft = trialEnd ? Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0
+  const subDaysLeft = subEnd ? Math.max(0, Math.ceil((subEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0
+  const isTrialExpired = subStatus === 'trial' && trialDaysLeft === 0
+  const isSubExpired = subStatus === 'active' && subDaysLeft === 0
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto fade-in-up">
       {/* Header Section */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Restaurant Profile</h1>
           <p className="text-gray-500 mt-1 text-sm">This info appears on your public menu page.</p>
@@ -331,6 +341,108 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Subscription Status Card */}
+      {restaurant && (
+        <div className={`mb-8 rounded-3xl overflow-hidden border ${
+          subStatus === 'active' && !isSubExpired
+            ? 'border-emerald-200'
+            : isTrialExpired || isSubExpired
+            ? 'border-red-200'
+            : subStatus === 'trial'
+            ? 'border-amber-200'
+            : 'border-slate-200'
+        }`}>
+          <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 sm:p-6 ${
+            subStatus === 'active' && !isSubExpired
+              ? 'bg-gradient-to-r from-emerald-50 to-teal-50'
+              : isTrialExpired || isSubExpired
+              ? 'bg-gradient-to-r from-red-50 to-rose-50'
+              : subStatus === 'trial'
+              ? 'bg-gradient-to-r from-amber-50 to-orange-50'
+              : 'bg-gradient-to-r from-slate-50 to-gray-50'
+          }`}>
+            {/* Left: icon + text */}
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm ${
+                subStatus === 'active' && !isSubExpired ? 'bg-emerald-500' :
+                isTrialExpired || isSubExpired ? 'bg-red-500' :
+                subStatus === 'trial' ? 'bg-amber-500' : 'bg-slate-400'
+              }`}>
+                {subStatus === 'active' && !isSubExpired
+                  ? <Crown size={22} className="text-white" />
+                  : isTrialExpired || isSubExpired
+                  ? <Zap size={22} className="text-white" />
+                  : <Clock size={22} className="text-white" />}
+              </div>
+              <div>
+                <div className={`text-xs font-bold uppercase tracking-widest mb-0.5 ${
+                  subStatus === 'active' && !isSubExpired ? 'text-emerald-600' :
+                  isTrialExpired || isSubExpired ? 'text-red-600' :
+                  subStatus === 'trial' ? 'text-amber-600' : 'text-slate-500'
+                }`}>
+                  {subStatus === 'active' && !isSubExpired ? 'Active Subscription' :
+                   isTrialExpired ? 'Trial Expired' :
+                   isSubExpired ? 'Subscription Expired' :
+                   subStatus === 'trial' ? 'Free Trial' : 'No Subscription'}
+                </div>
+                <p className="text-slate-800 font-bold text-base">
+                  {subStatus === 'active' && !isSubExpired
+                    ? `${subDaysLeft} day${subDaysLeft !== 1 ? 's' : ''} remaining`
+                    : isTrialExpired
+                    ? 'Your trial has ended — subscribe to continue'
+                    : isSubExpired
+                    ? 'Your subscription has expired — renew to restore access'
+                    : subStatus === 'trial'
+                    ? `${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} left in your trial`
+                    : 'Subscribe to unlock full access'}
+                </p>
+                {subStatus === 'active' && subEnd && !isSubExpired && (
+                  <p className="text-slate-400 text-xs mt-0.5">
+                    Renews on {subEnd.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                )}
+                {subStatus === 'trial' && trialEnd && !isTrialExpired && (
+                  <p className="text-slate-400 text-xs mt-0.5">
+                    Trial ends {trialEnd.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Right: CTA */}
+            <a
+              href="/subscribe"
+              className={`flex-shrink-0 flex items-center gap-2 font-bold px-6 py-3 rounded-2xl text-sm shadow-sm transition-all hover:scale-105 active:scale-95 ${
+                subStatus === 'active' && !isSubExpired
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200'
+              }`}
+            >
+              <CreditCard size={16} />
+              {subStatus === 'active' && !isSubExpired ? 'Renew Subscription' : 'Subscribe — ₹100 / 3 months'}
+            </a>
+          </div>
+
+          {/* Progress bar for trial */}
+          {subStatus === 'trial' && !isTrialExpired && (
+            <div className="h-1.5 bg-amber-100">
+              <div
+                className="h-full bg-amber-400 transition-all"
+                style={{ width: `${Math.max(5, (trialDaysLeft / 3) * 100)}%` }}
+              />
+            </div>
+          )}
+          {subStatus === 'active' && !isSubExpired && subDaysLeft <= 30 && (
+            <div className="h-1.5 bg-emerald-100">
+              <div
+                className="h-full bg-emerald-400 transition-all"
+                style={{ width: `${Math.max(5, (subDaysLeft / 90) * 100)}%` }}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="glass-panel rounded-3xl p-6 sm:p-8 shadow-sm space-y-8">
         {/* Cover Photo */}
