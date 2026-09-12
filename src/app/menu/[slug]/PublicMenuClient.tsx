@@ -623,7 +623,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                   <span className="h-[1px] w-6 bg-neutral-200" />
                 </div>
 
-                <div className="space-y-1.5 max-h-[200px] md:max-h-[250px] overflow-y-auto pr-1">
+                <div className="space-y-1.5 flex-1 min-h-[300px] md:min-h-0 md:max-h-[350px] overflow-y-auto pr-1">
                   {categories.length === 0 ? (
                     <p className="text-center text-xs text-neutral-400 italic py-6">No categories defined yet</p>
                   ) : (
@@ -694,7 +694,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                   <DividerFlourish />
                 </div>
 
-                <div className="space-y-2 max-h-[400px] md:max-h-[460px] overflow-y-auto pr-1">
+                <div className="space-y-2 flex-1 min-h-[400px] md:min-h-0 md:max-h-[460px] overflow-y-auto pr-1">
                   {searchQuery ? (
                     globalMatchingItems.length === 0 ? (
                       <div className="text-center py-12 text-neutral-400 italic text-sm">
@@ -856,7 +856,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
       {cartItemCount > 0 && !isCartOpen && (
         <button
           onClick={() => setIsCartOpen(true)}
-          className="fixed bottom-6 right-6 z-50 rounded-full shadow-2xl p-4 text-white hover:scale-105 active:scale-95 transition-transform flex items-center gap-2 animate-bounce-short"
+          className="fixed bottom-8 md:bottom-6 right-4 md:right-6 z-50 rounded-full shadow-2xl p-4 text-white hover:scale-105 active:scale-95 transition-transform flex items-center gap-2 animate-bounce-short"
           style={{ backgroundColor: primaryColor }}
         >
           <ShoppingBag size={24} />

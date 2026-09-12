@@ -328,11 +328,11 @@ export default function ProfilePage() {
   const isSubExpired = subStatus === 'active' && subDaysLeft === 0
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto fade-in-up">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto fade-in-up pb-28 md:pb-8">
       {/* Header Section */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Restaurant Profile</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Restaurant Profile</h1>
           <p className="text-gray-500 mt-1 text-sm">This info appears on your public menu page.</p>
         </div>
         {restaurant && (

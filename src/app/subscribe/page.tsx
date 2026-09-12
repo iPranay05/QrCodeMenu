@@ -235,9 +235,11 @@ export default function SubscribePage() {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-10 items-center">
-          {/* Left — Value prop */}
-          <div>
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-start">
+          {/* On mobile: card first (order-first), then features. On desktop: features left, card right */}
+
+          {/* Right — Payment card (shows first on mobile) */}
+          <div className="order-first lg:order-last">
             <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-600 px-4 py-1.5 rounded-full text-xs font-bold mb-6">
               <Sparkles size={12} />
               Simple, Honest Pricing
@@ -271,8 +273,8 @@ export default function SubscribePage() {
             </div>
           </div>
 
-          {/* Right — Payment card */}
-          <div>
+          {/* Left — Feature list (shows second on mobile) */}
+          <div className="order-last lg:order-first">
             <div className="bg-white rounded-3xl shadow-[0_24px_64px_rgba(15,23,42,0.06)] border border-slate-200/80 overflow-hidden">
               {/* Card header */}
               <div className="bg-slate-900 px-8 pt-8 pb-6 relative overflow-hidden">

@@ -9,7 +9,7 @@ interface AuroraProps {
 
 export default function Aurora({ children, showGrid = true, className = '' }: AuroraProps) {
   return (
-    <div className={`relative min-h-screen w-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100/80 ${className}`}>
+    <div className={`relative min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100/80 ${className}`}>
       {/* Self-contained keyframe styles */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes float-blob-1 {

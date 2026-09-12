@@ -460,7 +460,7 @@ export default function MenuBuilderPage() {
 
   if (dbError === 'restaurant_missing' || !restaurant) {
     return (
-      <div className="p-4 sm:p-6 lg:p-10 pb-28 sm:pb-12 max-w-md mx-auto">
+      <div className="p-4 sm:p-6 lg:p-10 pb-28 md:pb-12 max-w-md mx-auto">
         <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm text-center">
           <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white shadow-sm">
             <Sparkles className="w-8 h-8" />
@@ -505,7 +505,7 @@ export default function MenuBuilderPage() {
   ) || []
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto fade-in-up">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto fade-in-up pb-28 md:pb-8">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Menu Builder</h1>
