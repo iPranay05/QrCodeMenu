@@ -55,7 +55,7 @@ Return ONLY a valid JSON object matching the following structure. Do NOT wrap it
           ],
         },
       ],
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      model: 'qwen/qwen3.8-27b',
       response_format: { type: 'json_object' },
       temperature: 0.1,
     });
