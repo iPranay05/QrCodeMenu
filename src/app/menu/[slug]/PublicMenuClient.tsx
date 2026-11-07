@@ -66,6 +66,17 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
   const [cart, setCart] = useState<{ [itemId: string]: { item: MenuItem; quantity: number } }>({})
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [tableNumber, setTableNumber] = useState('')
+
+  // Read ?table= query parameter if present on load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const tableFromUrl = params.get('table')
+      if (tableFromUrl) {
+        setTableNumber(tableFromUrl)
+      }
+    }
+  }, [])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState(false)
 

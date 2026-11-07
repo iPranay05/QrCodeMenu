@@ -20,8 +20,78 @@ export interface Restaurant {
   subscription_status: 'trial' | 'active' | 'expired' | 'grace' | null
   subscription_expires_at: string | null
   trial_ends_at: string | null
+  qr_design?: QrDesign | null
   created_at: string
   updated_at: string
+}
+
+export type QrDotType = 'square' | 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'extra-rounded'
+export type QrEyeFrameType = 'square' | 'extra-rounded' | 'dot'
+export type QrEyeBallType = 'square' | 'dot'
+export type QrFrameStyle = 'none' | 'simple' | 'bottom-label' | 'top-label' | 'table-tent'
+
+export interface QrDesign {
+  // Colors
+  foregroundColorType: 'solid' | 'gradient'
+  foregroundColor: string
+  gradientColor2: string
+  gradientType: 'linear' | 'radial'
+  gradientRotation: number
+  backgroundColor: string // hex or 'transparent'
+  isTransparentBg: boolean
+  useBrandColor: boolean
+  customEyeColor: boolean
+  eyeFrameColor: string
+  eyeBallColor: string
+
+  // Shapes & Styles
+  dotType: QrDotType
+  eyeFrameType: QrEyeFrameType
+  eyeBallType: QrEyeBallType
+  quietZone: number // 0 to 40 (margin)
+  errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H'
+
+  // Center Logo
+  logoUrl: string | null
+  logoSize: number // 0.15 to 0.40
+  logoMargin: number // 0 to 20
+  hideBackgroundDots: boolean
+
+  // Frame & CTA
+  frameStyle: QrFrameStyle
+  frameText: string
+  frameTextColor: string
+  frameColor: string
+}
+
+export const DEFAULT_QR_DESIGN: QrDesign = {
+  foregroundColorType: 'solid',
+  foregroundColor: '#0f172a',
+  gradientColor2: '#4f46e5',
+  gradientType: 'linear',
+  gradientRotation: 45,
+  backgroundColor: '#ffffff',
+  isTransparentBg: false,
+  useBrandColor: false,
+  customEyeColor: false,
+  eyeFrameColor: '#0f172a',
+  eyeBallColor: '#0f172a',
+
+  dotType: 'rounded',
+  eyeFrameType: 'extra-rounded',
+  eyeBallType: 'dot',
+  quietZone: 16,
+  errorCorrectionLevel: 'H',
+
+  logoUrl: null,
+  logoSize: 0.28,
+  logoMargin: 6,
+  hideBackgroundDots: true,
+
+  frameStyle: 'bottom-label',
+  frameText: 'SCAN TO VIEW OUR MENU',
+  frameTextColor: '#ffffff',
+  frameColor: '#0f172a',
 }
 
 export interface MenuCategory {
