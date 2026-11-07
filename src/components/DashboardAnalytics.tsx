@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
-import { QRCodeSVG } from 'qrcode.react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Download, Copy, ExternalLink, Share2, QrCode, BarChart2, Check, Utensils, Trophy } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { Restaurant } from '@/lib/types'
+import type { Restaurant, QrDesign } from '@/lib/types'
+import { DEFAULT_QR_DESIGN } from '@/lib/types'
+import { buildQrCodeOptions, renderFramedQrCanvas } from './qr/qrRenderer'
 
 interface PopularItem {
   id: string
@@ -26,8 +27,45 @@ const RANK_COLORS = [
 ]
 
 export default function DashboardAnalytics({ restaurant, menuUrl, popularItems }: DashboardAnalyticsProps) {
-  const qrRef = useRef<HTMLDivElement>(null)
+  const qrContainerRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+
+  // Use the saved custom QR design or default fallback
+  const design: QrDesign = restaurant.qr_design
+    ? { ...DEFAULT_QR_DESIGN, ...restaurant.qr_design }
+    : DEFAULT_QR_DESIGN
+
+  // Render the styled QR code in the Overview tab preview
+  useEffect(() => {
+    let isCancelled = false
+
+    const renderQr = async () => {
+      if (typeof window === 'undefined' || !qrContainerRef.current) return
+
+      try {
+        const QRCodeStyling = (await import('qr-code-styling')).default
+        const PREVIEW_SIZE = 220
+
+        // Use custom options from saved qr_design
+        const options = buildQrCodeOptions(design, menuUrl, PREVIEW_SIZE)
+        const qr = new QRCodeStyling(options)
+
+        if (qrContainerRef.current && !isCancelled) {
+          qrContainerRef.current.innerHTML = ''
+          await qr.append(qrContainerRef.current)
+        }
+      } catch (err) {
+        console.error('Failed to render dashboard QR code:', err)
+      }
+    }
+
+    renderQr()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [design, menuUrl])
 
   const copyUrl = () => {
     navigator.clipboard.writeText(menuUrl)
@@ -36,30 +74,54 @@ export default function DashboardAnalytics({ restaurant, menuUrl, popularItems }
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const downloadQR = useCallback(() => {
-    const svg = qrRef.current?.querySelector('svg')
-    if (!svg) return
+  // Download styled, high-res framed QR matching QrDesigner
+  const downloadQR = useCallback(async () => {
+    setDownloading(true)
+    try {
+      const QRCodeStyling = (await import('qr-code-styling')).default
+      const SIZE = 1024
+      const qrOptions = buildQrCodeOptions(design, menuUrl, SIZE)
+      const qr = new QRCodeStyling(qrOptions)
 
-    const canvas = document.createElement('canvas')
-    const SIZE = 512
-    canvas.width = SIZE
-    canvas.height = SIZE
-    const ctx = canvas.getContext('2d')!
+      const blob = await qr.getRawData('png')
+      if (!blob) throw new Error('QR render returned empty blob')
 
-    const data = new XMLSerializer().serializeToString(svg)
-    const img = new Image()
-    img.onload = () => {
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, SIZE, SIZE)
-      ctx.drawImage(img, 0, 0, SIZE, SIZE)
+      const objectUrl = URL.createObjectURL(blob as Blob)
+      const rawCanvas = await new Promise<HTMLCanvasElement>((resolve, reject) => {
+        const img = new Image()
+        img.onload = () => {
+          const c = document.createElement('canvas')
+          c.width = SIZE
+          c.height = SIZE
+          const ctx = c.getContext('2d')!
+          if (!design.isTransparentBg) {
+            ctx.fillStyle = design.backgroundColor
+            ctx.fillRect(0, 0, SIZE, SIZE)
+          }
+          ctx.drawImage(img, 0, 0, SIZE, SIZE)
+          URL.revokeObjectURL(objectUrl)
+          resolve(c)
+        }
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl)
+          reject(new Error('Failed to load QR image'))
+        }
+        img.src = objectUrl
+      })
+
+      const framedCanvas = await renderFramedQrCanvas(rawCanvas, design, SIZE)
       const link = document.createElement('a')
       link.download = `${restaurant.slug}-qr-menu.png`
-      link.href = canvas.toDataURL('image/png')
+      link.href = framedCanvas.toDataURL('image/png')
       link.click()
-      toast.success('QR Code downloaded! 🖼️')
+      toast.success('Custom QR Code downloaded! 🖼️')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to download QR code')
+    } finally {
+      setDownloading(false)
     }
-    img.src = `data:image/svg+xml;base64,${btoa(data)}`
-  }, [restaurant])
+  }, [design, menuUrl, restaurant.slug])
 
   const shareUrl = async () => {
     if (navigator.share) {
@@ -72,6 +134,8 @@ export default function DashboardAnalytics({ restaurant, menuUrl, popularItems }
       copyUrl()
     }
   }
+
+  const frameStyle = design.frameStyle
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -156,15 +220,16 @@ export default function DashboardAnalytics({ restaurant, menuUrl, popularItems }
         </div>
       </div>
 
-      {/* Right Side — QR Code */}
+      {/* Right Side — Custom Styled QR Code */}
       <div className="lg:col-span-4 space-y-4">
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_8px_rgba(15,23,42,0.01)] p-5 flex flex-col items-center">
           {/* Restaurant header strip */}
           <div
             className="w-full rounded-xl py-2.5 px-3 mb-4 text-white text-center shadow-sm relative overflow-hidden"
-            style={{ background: `linear-gradient(135deg, ${restaurant.primary_color}, ${restaurant.primary_color}ee)` }}
+            style={{ background: `linear-gradient(135deg, ${restaurant.primary_color || '#6366f1'}, ${restaurant.primary_color || '#6366f1'}ee)` }}
           >
             {restaurant.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={restaurant.logo_url}
                 alt="logo"
@@ -179,16 +244,74 @@ export default function DashboardAnalytics({ restaurant, menuUrl, popularItems }
             {restaurant.tagline && <div className="text-white/80 text-[9px] mt-0.5 font-medium truncate">{restaurant.tagline}</div>}
           </div>
 
-          {/* QR Code */}
-          <div ref={qrRef} className="p-3 bg-white rounded-xl border border-slate-100 shadow-[inset_0_1.5px_8px_rgba(0,0,0,0.02)]">
-            <QRCodeSVG
-              value={menuUrl}
-              size={135}
-              fgColor="#1e293b"
-              bgColor="#ffffff"
-              level="H"
-              includeMargin={false}
-            />
+          {/* Styled QR Code with Outer Frame matching QrPreview (fixed max width & aspect ratio) */}
+          <div
+            className="transition-all duration-300 rounded-3xl p-3.5 flex flex-col items-center justify-center w-full max-w-[260px] mx-auto shadow-md"
+            style={{
+              backgroundColor:
+                frameStyle === 'table-tent'
+                  ? '#ffffff'
+                  : frameStyle !== 'none'
+                  ? design.frameColor
+                  : 'transparent',
+              border:
+                frameStyle === 'simple'
+                  ? `6px solid ${design.frameColor}`
+                  : frameStyle === 'table-tent'
+                  ? '1px solid #e2e8f0'
+                  : undefined,
+            }}
+          >
+            {/* Top Label for top-label or table-tent */}
+            {frameStyle === 'top-label' && (
+              <div
+                className="w-full text-center py-1.5 px-2 text-[10px] font-black tracking-wider uppercase mb-2 truncate"
+                style={{ color: design.frameTextColor }}
+              >
+                {design.frameText || 'SCAN ME'}
+              </div>
+            )}
+
+            {frameStyle === 'table-tent' && (
+              <div
+                className="w-full rounded-xl py-1.5 px-3 text-center text-[10px] font-black tracking-wider uppercase mb-2 shadow-sm truncate"
+                style={{
+                  backgroundColor: design.frameColor,
+                  color: design.frameTextColor,
+                }}
+              >
+                {design.frameText || 'TABLE MENU'}
+              </div>
+            )}
+
+            {/* Inner QR Canvas Container (strictly 1:1 square) */}
+            <div 
+              className="p-2 rounded-2xl flex items-center justify-center shadow-inner overflow-hidden w-full aspect-square"
+              style={{
+                backgroundColor: design.isTransparentBg ? 'transparent' : design.backgroundColor,
+              }}
+            >
+              <div 
+                ref={qrContainerRef} 
+                className="flex items-center justify-center w-full h-full [&>canvas]:w-full [&>canvas]:h-full [&>canvas]:object-contain"
+              />
+            </div>
+
+            {/* Bottom Label for bottom-label */}
+            {frameStyle === 'bottom-label' && (
+              <div
+                className="w-full text-center py-2 px-2 text-[10px] font-black tracking-wider uppercase mt-2 truncate"
+                style={{ color: design.frameTextColor }}
+              >
+                {design.frameText || 'SCAN ME'}
+              </div>
+            )}
+
+            {frameStyle === 'table-tent' && (
+              <div className="text-[9px] font-semibold text-slate-400 mt-1.5 text-center">
+                Point your camera to order
+              </div>
+            )}
           </div>
 
           <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest mt-3 text-center">Scan to preview menu</p>
@@ -209,10 +332,11 @@ export default function DashboardAnalytics({ restaurant, menuUrl, popularItems }
           <div className="flex flex-col w-full gap-2 mt-3.5">
             <button
               onClick={downloadQR}
-              className="bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer transition-colors duration-200"
+              disabled={downloading}
+              className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white py-2.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer transition-colors duration-200"
             >
               <Download size={13} />
-              <span>Download QR Image</span>
+              <span>{downloading ? 'Downloading...' : 'Download QR Image'}</span>
             </button>
             <div className="grid grid-cols-2 gap-2">
               <button

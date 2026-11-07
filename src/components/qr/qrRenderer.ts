@@ -114,12 +114,17 @@ export function buildQrCodeOptions(design: QrDesign, data: string, size: number)
 
   const effectiveErrorCorrection = design.logoUrl ? 'H' : design.errorCorrectionLevel
 
+  // Scale margin proportionally so the quiet zone visual margin matches across preview (320px) and export (1024px+)
+  // A standard preview size is 320px, so scaling factor is (size / 320)
+  const scaledMargin = Math.round(design.quietZone * (size / 320))
+
   return {
     width: size,
     height: size,
     type: 'canvas',
+    shape: design.shape || 'square',
     data,
-    margin: design.quietZone,
+    margin: scaledMargin,
     qrOptions: {
       typeNumber: 0 as TypeNumber,
       mode: 'Byte',
@@ -178,11 +183,18 @@ export async function renderFramedQrCanvas(
   }
 
   if (frameStyle === 'bottom-label' || frameStyle === 'top-label') {
-    const padding = Math.round(targetSize * 0.06)
+    // Proportions matching QrPreview:
+    // Outer padding: p-4 = 16px relative to ~280px QR canvas => ~5.5%
+    // Inner QR container padding: p-2 = 8px => ~2.8%
+    // Total outer card padding around the inner container:
+    const outerPadding = Math.round(targetSize * 0.055)
+    const innerPadding = Math.round(targetSize * 0.028)
     const headerOrFooterHeight = Math.round(targetSize * 0.16)
-    const totalWidth = targetSize + padding * 2
-    const totalHeight = targetSize + padding * 2 + headerOrFooterHeight
-    const borderRadius = Math.round(targetSize * 0.05)
+    const innerBoxSize = targetSize + innerPadding * 2
+
+    const totalWidth = innerBoxSize + outerPadding * 2
+    const totalHeight = innerBoxSize + outerPadding * 2 + headerOrFooterHeight
+    const borderRadius = Math.round(targetSize * 0.08)
 
     canvas.width = totalWidth
     canvas.height = totalHeight
@@ -192,39 +204,43 @@ export async function renderFramedQrCanvas(
     drawRoundedRect(ctx, 0, 0, totalWidth, totalHeight, borderRadius)
     ctx.fill()
 
-    // Inner QR container
-    const qrX = padding
-    const qrY = frameStyle === 'top-label' ? padding + headerOrFooterHeight : padding
+    // Inner QR container coordinates
+    const qrBoxX = outerPadding
+    const qrBoxY = frameStyle === 'top-label' ? outerPadding + headerOrFooterHeight : outerPadding
     
-    // Draw white or chosen background for QR container
+    // Draw white or chosen background for inner QR container with rounded corners
     ctx.fillStyle = design.isTransparentBg ? '#ffffff' : design.backgroundColor
-    drawRoundedRect(ctx, qrX, qrY, targetSize, targetSize, Math.round(borderRadius * 0.6))
+    drawRoundedRect(ctx, qrBoxX, qrBoxY, innerBoxSize, innerBoxSize, Math.round(borderRadius * 0.6))
     ctx.fill()
 
-    ctx.drawImage(rawQrCanvas, qrX, qrY, targetSize, targetSize)
+    // Draw QR canvas centered inside inner box
+    ctx.drawImage(rawQrCanvas, qrBoxX + innerPadding, qrBoxY + innerPadding, targetSize, targetSize)
 
     // Text Banner
     ctx.fillStyle = design.frameTextColor
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    const fontSize = Math.max(16, Math.round(targetSize * 0.055))
+    const fontSize = Math.max(16, Math.round(targetSize * 0.052))
     ctx.font = `bold ${fontSize}px sans-serif`
     
     const textY = frameStyle === 'top-label' 
-      ? padding + headerOrFooterHeight / 2 
-      : totalHeight - padding - headerOrFooterHeight / 2 + padding * 0.2
+      ? outerPadding + headerOrFooterHeight / 2 
+      : totalHeight - outerPadding - headerOrFooterHeight / 2 + outerPadding * 0.15
 
     ctx.fillText(design.frameText || 'SCAN ME', totalWidth / 2, textY)
     return canvas
   }
 
   if (frameStyle === 'table-tent') {
-    const padding = Math.round(targetSize * 0.08)
+    const outerPadding = Math.round(targetSize * 0.065)
+    const innerPadding = Math.round(targetSize * 0.025)
     const topHeight = Math.round(targetSize * 0.18)
     const bottomHeight = Math.round(targetSize * 0.12)
-    const totalWidth = targetSize + padding * 2
-    const totalHeight = targetSize + padding * 2 + topHeight + bottomHeight
-    const borderRadius = Math.round(targetSize * 0.04)
+    const innerBoxSize = targetSize + innerPadding * 2
+
+    const totalWidth = innerBoxSize + outerPadding * 2
+    const totalHeight = innerBoxSize + outerPadding * 2 + topHeight + bottomHeight
+    const borderRadius = Math.round(targetSize * 0.08)
 
     canvas.width = totalWidth
     canvas.height = totalHeight
@@ -236,21 +252,26 @@ export async function renderFramedQrCanvas(
 
     // Top banner
     ctx.fillStyle = design.frameColor
-    drawRoundedRect(ctx, padding * 0.5, padding * 0.5, totalWidth - padding, topHeight, Math.round(borderRadius * 0.7))
+    drawRoundedRect(ctx, outerPadding * 0.5, outerPadding * 0.5, totalWidth - outerPadding, topHeight, Math.round(borderRadius * 0.7))
     ctx.fill()
 
     // Top banner text
     ctx.fillStyle = design.frameTextColor
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    const titleSize = Math.max(18, Math.round(targetSize * 0.058))
+    const titleSize = Math.max(18, Math.round(targetSize * 0.055))
     ctx.font = `bold ${titleSize}px sans-serif`
-    ctx.fillText(design.frameText || 'TABLE MENU', totalWidth / 2, padding * 0.5 + topHeight / 2)
+    ctx.fillText(design.frameText || 'TABLE MENU', totalWidth / 2, outerPadding * 0.5 + topHeight / 2)
+
+    // Inner QR container
+    const qrBoxX = outerPadding
+    const qrBoxY = outerPadding + topHeight
+    ctx.fillStyle = design.isTransparentBg ? '#ffffff' : design.backgroundColor
+    drawRoundedRect(ctx, qrBoxX, qrBoxY, innerBoxSize, innerBoxSize, Math.round(borderRadius * 0.6))
+    ctx.fill()
 
     // QR in center
-    const qrX = padding
-    const qrY = padding + topHeight
-    ctx.drawImage(rawQrCanvas, qrX, qrY, targetSize, targetSize)
+    ctx.drawImage(rawQrCanvas, qrBoxX + innerPadding, qrBoxY + innerPadding, targetSize, targetSize)
 
     // Bottom footnote
     ctx.fillStyle = '#64748b'

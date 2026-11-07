@@ -26,8 +26,9 @@ export interface Restaurant {
 }
 
 export type QrDotType = 'square' | 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'extra-rounded'
-export type QrEyeFrameType = 'square' | 'extra-rounded' | 'dot'
-export type QrEyeBallType = 'square' | 'dot'
+export type QrEyeFrameType = 'square' | 'extra-rounded' | 'dot' | 'classy-rounded' | 'dots'
+export type QrEyeBallType = 'square' | 'dot' | 'rounded' | 'classy-rounded' | 'dots'
+export type QrShape = 'square' | 'circle'
 export type QrFrameStyle = 'none' | 'simple' | 'bottom-label' | 'top-label' | 'table-tent'
 
 export interface QrDesign {
@@ -45,6 +46,7 @@ export interface QrDesign {
   eyeBallColor: string
 
   // Shapes & Styles
+  shape?: QrShape
   dotType: QrDotType
   eyeFrameType: QrEyeFrameType
   eyeBallType: QrEyeBallType
@@ -77,6 +79,7 @@ export const DEFAULT_QR_DESIGN: QrDesign = {
   eyeFrameColor: '#0f172a',
   eyeBallColor: '#0f172a',
 
+  shape: 'square',
   dotType: 'rounded',
   eyeFrameType: 'extra-rounded',
   eyeBallType: 'dot',
