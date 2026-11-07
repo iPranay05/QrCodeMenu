@@ -42,6 +42,7 @@ export interface MenuItem {
   image_url: string | null
   ingredients: string | null
   video_url: string | null
+  preparation_time: string | null
   is_available: boolean
   is_veg: boolean
   display_order: number

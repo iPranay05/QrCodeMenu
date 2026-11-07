@@ -728,30 +728,34 @@ export default function ProfilePage() {
             </h3>
               <div className="col-span-full">
                 <label className="block text-sm font-semibold text-slate-600 mb-3">Menu Layout Theme</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                   {[
-                    { id: 'book', name: 'Classic Book', desc: 'Dual-page layout' },
-                    { id: 'modern', name: 'Modern List', desc: 'Clean, single-page list' },
-                    { id: 'grid', name: 'Photo Grid', desc: 'Visual, image-first gallery' }
+                    { id: 'book', name: 'Classic Book', desc: 'Dual-page vintage binder with page turns' },
+                    { id: 'modern', name: 'Modern List', desc: 'Clean, elegant single-page list' },
+                    { id: 'grid', name: 'Photo Grid', desc: 'Visual, image-first card gallery' },
+                    { id: 'dark-luxe', name: 'Midnight Luxury', desc: 'Obsidian & champagne gold lounge' },
+                    { id: 'chalkboard', name: 'Rustic Bistro', desc: 'Matte chalkboard with artisan flourishes' },
+                    { id: 'bento', name: 'Nordic Bento', desc: 'Minimalist Japanese bento box cards' },
+                    { id: 'street', name: 'Street Pop Diner', desc: 'Bold diner with sticker badges & punchy tags' },
                   ].map((t) => (
                     <div
                       key={t.id}
                       onClick={() => setValue('theme', t.id, { shouldDirty: true })}
-                      className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
+                      className={`relative p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
                         selectedTheme === t.id 
-                          ? 'border-indigo-500 bg-indigo-50/50 shadow-md scale-[1.02]' 
+                          ? 'border-indigo-500 bg-indigo-50/50 shadow-md scale-[1.01]' 
                           : 'border-slate-200 hover:border-indigo-300 bg-white hover:bg-slate-50'
                       }`}
                     >
                       <div className="flex items-start justify-between mb-1">
-                        <span className="font-bold text-slate-800">{t.name}</span>
+                        <span className="font-bold text-slate-800 text-sm">{t.name}</span>
                         {selectedTheme === t.id && (
-                          <div className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-sm">
+                          <div className="size-4.5 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-xs">
                             <span className="text-[10px]">✓</span>
                           </div>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500">{t.desc}</p>
+                      <p className="text-[11px] text-slate-500 leading-tight">{t.desc}</p>
                     </div>
                   ))}
                 </div>

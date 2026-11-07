@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { MapPin, Phone, Globe, Search, ArrowLeft, ChevronLeft, ChevronRight, ShoppingBag, X, Plus, Minus, CheckCircle2, PlayCircle, Info, BookOpen, Clock } from 'lucide-react'
 import type { Restaurant, MenuCategoryWithItems, MenuItem } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
@@ -74,7 +74,19 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
   const supabase = createClient()
   const primaryColor = restaurant.primary_color || '#6366F1'
   const bgImage = restaurant.background_image_url
-  const themeLayout = restaurant.theme || 'book'
+  const [previewTheme, setPreviewTheme] = useState<string>(restaurant.theme || 'book')
+  const themeLayout = previewTheme
+
+  // Refs for scroll containers — reset to top when category changes
+  const bookItemsScrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    bookItemsScrollRef.current?.scrollTo({ top: 0 })
+    // For modern/grid layouts the items area is the page itself — scroll window to below sticky header
+    if (themeLayout !== 'book') {
+      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+    }
+  }, [activeCategory, themeLayout])
 
   const activeCategoryIndex = useMemo(() => categories.findIndex(c => c.id === activeCategory), [categories, activeCategory])
   const activeCategoryData = useMemo(() => categories.find(c => c.id === activeCategory), [categories, activeCategory])
@@ -182,6 +194,14 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
 
   const renderItemDetails = (item: MenuItem) => (
     <div className="bg-neutral-50/80 p-3 rounded-xl border border-neutral-200/60 mt-2 mb-2 animate-in fade-in slide-in-from-top-2 text-sm backdrop-blur-sm">
+      {item.preparation_time && (
+        <div className="mb-3">
+          <strong className="text-neutral-700 text-xs uppercase tracking-wider block mb-1 flex items-center gap-1.5">
+            <Clock size={13} className="text-amber-600" /> Preparation Time
+          </strong>
+          <p className="text-neutral-700 text-[13px] font-semibold">{item.preparation_time}</p>
+        </div>
+      )}
       {item.ingredients && (
         <div className="mb-3">
           <strong className="text-neutral-700 text-xs uppercase tracking-wider block mb-1">Ingredients</strong>
@@ -206,7 +226,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
           </div>
         </div>
       )}
-      {!item.ingredients && !item.video_url && (
+      {!item.ingredients && !item.video_url && !item.preparation_time && (
         <p className="text-neutral-400 text-xs italic">No additional details available.</p>
       )}
     </div>
@@ -248,7 +268,14 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
               </p>
             )}
 
-            {(item.ingredients || item.video_url) && !isExpanded && (
+            {item.preparation_time && (
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50/90 border border-amber-200/70 px-2 py-0.5 rounded-md w-fit mb-2 shadow-xs">
+                <Clock size={12} className="text-amber-600 flex-shrink-0" />
+                <span>{item.preparation_time}</span>
+              </div>
+            )}
+
+            {(item.ingredients || item.video_url || item.preparation_time) && !isExpanded && (
                <button onClick={() => setExpandedItemId(item.id)} className="text-[10px] text-neutral-400 flex items-center gap-1 mb-2 hover:text-neutral-600 transition-colors w-fit">
                  <Info size={12} /> More details
                </button>
@@ -302,7 +329,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                 <h3 className="font-display font-black text-neutral-800 text-[15px] sm:text-[16px] leading-tight">
                   {item.name}
                 </h3>
-                {(item.ingredients || item.video_url) && (
+                {(item.ingredients || item.video_url || item.preparation_time) && (
                   <span className="text-neutral-400"><Info size={14} /></span>
                 )}
               </div>
@@ -315,11 +342,19 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                 {item.description}
               </p>
             )}
-            {categoryName && (
-              <span className="inline-block mt-1 text-[9px] uppercase tracking-wider font-bold bg-neutral-200/50 px-1.5 py-0.5 rounded text-neutral-600">
-                {categoryName}
-              </span>
-            )}
+            <div className="flex items-center gap-2 flex-wrap mt-1.5">
+              {item.preparation_time && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50/90 border border-amber-200/70 px-2 py-0.5 rounded-md shadow-xs">
+                  <Clock size={11} className="text-amber-600 flex-shrink-0" />
+                  <span>{item.preparation_time}</span>
+                </span>
+              )}
+              {categoryName && (
+                <span className="text-[9px] uppercase tracking-wider font-bold bg-neutral-200/50 px-1.5 py-0.5 rounded text-neutral-600">
+                  {categoryName}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -645,8 +680,9 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                           {cat.name}
                         </span>
                         <span className="flex-1 border-b border-dashed border-neutral-300/70 mx-2 mb-1" />
-                        <span className="font-display font-medium italic text-xs text-neutral-400">
+                        <span className="font-display font-medium italic text-xs text-neutral-400 flex items-center gap-1">
                           p. {idx + 2}
+                          <ChevronRight size={13} className="text-neutral-400 group-hover:translate-x-0.5 transition-transform" />
                         </span>
                       </button>
                     ))
@@ -655,9 +691,36 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
               </div>
 
               <div className="mt-6 pt-4 border-t border-neutral-200/60">
-                <div className="mt-3 flex justify-between items-center text-[10px] text-neutral-400 select-none">
+                {/* Mobile Prominent Next Page Button */}
+                <button
+                  onClick={() => {
+                    if (categories.length > 0 && !activeCategory) {
+                      setActiveCategory(categories[0].id)
+                    }
+                    setMobileView('items')
+                  }}
+                  className="md:hidden w-full py-3 mb-3 rounded-xl font-bold text-xs text-white shadow-md flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <span>Open Menu (Page 2)</span>
+                  <ChevronRight size={15} />
+                </button>
+
+                <div className="mt-2 flex justify-between items-center text-[10px] text-neutral-400 select-none">
                   <span className="font-cinzel tracking-wider uppercase">{restaurant.name}</span>
-                  <span>Page 1</span>
+                  <button
+                    onClick={() => {
+                      if (categories.length > 0 && !activeCategory) {
+                        setActiveCategory(categories[0].id)
+                      }
+                      setMobileView('items')
+                    }}
+                    className="md:hidden font-bold flex items-center gap-1 cursor-pointer"
+                    style={{ color: primaryColor }}
+                  >
+                    <span>Next Page ➔</span>
+                  </button>
+                  <span className="hidden md:inline">Page 1</span>
                 </div>
               </div>
             </div>
@@ -677,13 +740,40 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
               )}
 
               {mobileView === 'items' && (
-                <button
-                  onClick={() => setMobileView('index')}
-                  className="md:hidden self-start flex items-center gap-1 text-[11px] font-bold text-neutral-500 hover:text-neutral-800 mb-4 bg-neutral-100 px-2.5 py-1 rounded-lg border border-neutral-200 shadow-sm"
-                >
-                  <ArrowLeft size={12} />
-                  Table of Contents
-                </button>
+                <div className="md:hidden flex items-center justify-between gap-2 mb-3">
+                  <button
+                    onClick={() => setMobileView('index')}
+                    className="flex items-center gap-1.5 text-xs font-bold text-neutral-700 hover:text-neutral-900 bg-white px-3 py-1.5 rounded-xl border border-neutral-200 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  >
+                    <ArrowLeft size={13} />
+                    <span>Table of Contents</span>
+                  </button>
+                  <span className="text-[11px] font-cinzel font-bold text-neutral-500">
+                    Page {!searchQuery ? activeCategoryIndex + 2 : '?'} of {categories.length + 1}
+                  </span>
+                </div>
+              )}
+
+              {/* Mobile Quick Category Switcher Tabs */}
+              {mobileView === 'items' && !searchQuery && categories.length > 1 && (
+                <div className="flex md:hidden overflow-x-auto hide-scrollbar gap-1.5 pb-2 mb-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-bold transition-all border shrink-0 cursor-pointer ${
+                        activeCategory === cat.id
+                          ? 'text-white border-transparent shadow-xs'
+                          : 'bg-white/80 text-neutral-600 border-neutral-200 hover:bg-white'
+                      }`}
+                      style={{
+                        backgroundColor: activeCategory === cat.id ? primaryColor : undefined,
+                      }}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
               )}
 
               <div>
@@ -694,7 +784,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                   <DividerFlourish />
                 </div>
 
-                <div className="space-y-2 flex-1 min-h-[400px] md:min-h-0 md:max-h-[460px] overflow-y-auto pr-1">
+                <div ref={bookItemsScrollRef} className="space-y-2 flex-1 min-h-[400px] md:min-h-0 md:max-h-[460px] overflow-y-auto pr-1">
                   {searchQuery ? (
                     globalMatchingItems.length === 0 ? (
                       <div className="text-center py-12 text-neutral-400 italic text-sm">
@@ -716,23 +806,30 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
               </div>
 
               <div className="mt-6 pt-4 border-t border-neutral-200/60 flex items-center justify-between">
-                {!searchQuery && categories.length > 1 ? (
+                {!searchQuery && categories.length > 0 ? (
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => turnPage('prev')}
-                      disabled={activeCategoryIndex === 0}
-                      className="p-1.5 rounded-md border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 disabled:opacity-40 transition-colors shadow-xs"
+                      onClick={() => {
+                        if (activeCategoryIndex === 0) {
+                          setMobileView('index')
+                        } else {
+                          turnPage('prev')
+                        }
+                      }}
+                      className="px-2.5 py-1.5 rounded-md border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 transition-colors shadow-xs flex items-center gap-1 text-xs font-bold cursor-pointer"
                     >
                       <ChevronLeft size={16} />
+                      <span className="md:hidden text-[11px]">{activeCategoryIndex === 0 ? 'Cover' : 'Prev'}</span>
                     </button>
-                    <span className="text-xs font-bold text-neutral-500 font-cinzel">
+                    <span className="text-xs font-bold text-neutral-500 font-cinzel px-1">
                       {activeCategoryIndex + 1} / {categories.length}
                     </span>
                     <button
                       onClick={() => turnPage('next')}
                       disabled={activeCategoryIndex === categories.length - 1}
-                      className="p-1.5 rounded-md border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 disabled:opacity-40 transition-colors shadow-xs"
+                      className="px-2.5 py-1.5 rounded-md border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 disabled:opacity-40 transition-colors shadow-xs flex items-center gap-1 text-xs font-bold cursor-pointer"
                     >
+                      <span className="md:hidden text-[11px]">Next</span>
                       <ChevronRight size={16} />
                     </button>
                   </div>
@@ -851,8 +948,490 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
     )
   }
 
+  // ── 1. THEME: MIDNIGHT LUXURY (dark-luxe) ──
+  const renderDarkLuxeLayout = () => {
+    return (
+      <div className="relative min-h-screen bg-[#07090e] text-slate-100 font-sans pb-28">
+        {/* Subtle Ambient Gold Glow */}
+        <div
+          className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-96 pointer-events-none -z-10 opacity-30"
+          style={{ background: 'radial-gradient(ellipse at top, rgba(212,175,55,0.2) 0%, transparent 70%)' }}
+        />
+
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-40 bg-[#0b0f19]/90 backdrop-blur-xl border-b border-amber-500/20 shadow-xl">
+          <div className="max-w-4xl mx-auto px-4 py-3 sm:py-4">
+            <div className="flex items-center gap-3">
+              {restaurant.logo_url && (
+                <img src={restaurant.logo_url} alt={restaurant.name} className="size-12 rounded-full object-cover border-2 border-amber-400/40 shadow-md" />
+              )}
+              <div className="flex-1 min-w-0">
+                <h1 className="font-cinzel text-lg sm:text-xl font-black text-amber-200 tracking-wider truncate">
+                  {restaurant.name}
+                </h1>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-xs text-slate-400">
+                  {restaurant.tagline && <span className="italic text-amber-300/70">{restaurant.tagline}</span>}
+                  {restaurant.address && <span>{restaurant.address}</span>}
+                  {restaurant.phone && <a href={`tel:${restaurant.phone}`} className="hover:text-amber-300">{restaurant.phone}</a>}
+                </div>
+              </div>
+            </div>
+
+            {/* Search + Veg Filter */}
+            <div className="mt-3 flex flex-col sm:flex-row gap-2">
+              <div className="flex-1 flex items-center gap-2 bg-slate-900/90 border border-amber-500/30 rounded-xl px-3 py-2">
+                <Search size={15} className="text-amber-400/60" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search dishes, cocktails, wine..."
+                  className="bg-transparent text-xs text-white placeholder-slate-500 outline-none w-full"
+                />
+              </div>
+              <div className="flex gap-1 bg-slate-900 border border-amber-500/25 p-1 rounded-xl">
+                {(['all', 'veg', 'nonveg'] as const).map(filter => (
+                  <button
+                    key={filter}
+                    onClick={() => setVegFilter(filter)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all ${
+                      vegFilter === filter
+                        ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {filter === 'nonveg' ? 'Non-Veg' : filter}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Category Pills */}
+            {!searchQuery && (
+              <div className="flex overflow-x-auto hide-scrollbar gap-2 mt-3 -mx-4 sm:mx-0 px-4 sm:px-0">
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all border shrink-0 ${
+                      activeCategory === cat.id
+                        ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white border-amber-400 shadow-[0_0_15px_rgba(217,119,6,0.3)]'
+                        : 'bg-slate-900/80 text-amber-200/80 border-amber-500/25 hover:border-amber-400 hover:text-white'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="space-y-4">
+            {(searchQuery ? globalMatchingItems.map(g => g.item) : filteredActiveItems).map(item => {
+              const qty = cart[item.id]?.quantity || 0
+              return (
+                <div
+                  key={item.id}
+                  className="bg-[#0e1320]/90 border border-amber-500/20 hover:border-amber-500/40 rounded-2xl p-4 shadow-xl backdrop-blur-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="flex gap-3.5 items-start flex-1 min-w-0">
+                    {item.image_url && (
+                      <img src={item.image_url} alt={item.name} className="size-20 rounded-xl object-cover border border-amber-500/30 shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <VegIndicator isVeg={item.is_veg} />
+                        <h3 className="font-bold text-white text-base truncate">{item.name}</h3>
+                      </div>
+                      {item.description && (
+                        <p className="text-slate-400 text-xs leading-relaxed line-clamp-2 mb-2">{item.description}</p>
+                      )}
+                      {item.preparation_time && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-md">
+                          <Clock size={11} className="text-amber-400" />
+                          <span>{item.preparation_time}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                    <span className="font-cinzel font-black text-amber-300 text-lg tabular-nums">
+                      ₹{item.price}
+                    </span>
+                    {qty > 0 ? (
+                      <div className="flex items-center gap-2 bg-slate-900 border border-amber-500/40 rounded-xl px-2 py-1">
+                        <button onClick={() => updateQuantity(item.id, -1)} className="text-amber-300 hover:text-white p-1">
+                          <Minus size={14} />
+                        </button>
+                        <span className="font-bold text-sm text-white min-w-[2ch] text-center">{qty}</span>
+                        <button onClick={() => updateQuantity(item.id, 1)} className="text-amber-300 hover:text-white p-1">
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => addToCart(item)}
+                        className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs px-5 py-2 rounded-xl shadow-md cursor-pointer transition-all active:scale-95"
+                      >
+                        Add to Order
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 2. THEME: RUSTIC CHALKBOARD (chalkboard) ──
+  const renderChalkboardLayout = () => {
+    return (
+      <div className="relative min-h-screen bg-[#1c2128] text-stone-100 font-sans pb-28">
+        <div className="sticky top-0 z-40 bg-[#151921]/95 backdrop-blur-md border-b-2 border-dashed border-stone-600 shadow-md">
+          <div className="max-w-4xl mx-auto px-4 py-3 sm:py-4">
+            <div className="text-center mb-3">
+              <h1 className="font-cinzel text-xl sm:text-2xl font-black text-stone-100 tracking-widest uppercase">
+                ❦ {restaurant.name} ❦
+              </h1>
+              {restaurant.tagline && <p className="italic text-xs text-stone-400 mt-0.5">{restaurant.tagline}</p>}
+            </div>
+
+            {/* Category selection */}
+            {!searchQuery && (
+              <div className="flex overflow-x-auto hide-scrollbar gap-2 -mx-4 sm:mx-0 px-4 sm:px-0">
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`whitespace-nowrap px-4 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 ${
+                      activeCategory === cat.id
+                        ? 'bg-stone-100 text-stone-900 border-white shadow-sm font-black'
+                        : 'bg-stone-800/80 text-stone-300 border-stone-600 hover:text-white'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="space-y-4">
+            {(searchQuery ? globalMatchingItems.map(g => g.item) : filteredActiveItems).map(item => {
+              const qty = cart[item.id]?.quantity || 0
+              return (
+                <div
+                  key={item.id}
+                  className="bg-stone-900/60 border-2 border-dashed border-stone-700/80 hover:border-stone-500 rounded-2xl p-4 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="flex gap-3.5 items-start flex-1 min-w-0">
+                    {item.image_url && (
+                      <img src={item.image_url} alt={item.name} className="size-18 rounded-xl object-cover border border-stone-600 shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <VegIndicator isVeg={item.is_veg} />
+                        <h3 className="font-cinzel font-black text-stone-100 text-base">{item.name}</h3>
+                      </div>
+                      {item.description && (
+                        <p className="text-stone-400 text-xs leading-relaxed line-clamp-2 mb-2">{item.description}</p>
+                      )}
+                      {item.preparation_time && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-stone-800 border border-stone-600 px-2 py-0.5 rounded-md">
+                          <Clock size={11} className="text-amber-400" />
+                          <span>{item.preparation_time}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-stone-800">
+                    <span className="font-mono font-black text-amber-300 text-lg tabular-nums">
+                      ₹{item.price}
+                    </span>
+                    {qty > 0 ? (
+                      <div className="flex items-center gap-2 bg-stone-800 border border-stone-600 rounded-lg px-2 py-1">
+                        <button onClick={() => updateQuantity(item.id, -1)} className="text-stone-300 hover:text-white p-1">
+                          <Minus size={14} />
+                        </button>
+                        <span className="font-bold text-sm text-stone-100 min-w-[2ch] text-center">{qty}</span>
+                        <button onClick={() => updateQuantity(item.id, 1)} className="text-stone-300 hover:text-white p-1">
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => addToCart(item)}
+                        className="bg-stone-100 hover:bg-white text-stone-900 font-black text-xs px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-transform active:scale-95"
+                      >
+                        + Add Dish
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 3. THEME: NORDIC BENTO (bento) ──
+  const renderBentoLayout = () => {
+    return (
+      <div className="relative min-h-screen bg-[#f4f1ea] text-stone-900 font-sans pb-28">
+        <div className="sticky top-0 z-40 bg-[#f4f1ea]/90 backdrop-blur-xl border-b-2 border-stone-900 shadow-sm">
+          <div className="max-w-4xl mx-auto px-4 py-3 sm:py-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">BENTO MENU</span>
+                <h1 className="text-xl sm:text-2xl font-black text-stone-950 tracking-tight leading-tight uppercase">
+                  {restaurant.name}
+                </h1>
+              </div>
+              <span className="text-xs font-black bg-stone-950 text-white px-3 py-1 rounded-full border border-stone-900">
+                TABLE SERVICE
+              </span>
+            </div>
+
+            {/* Category Pills */}
+            {!searchQuery && (
+              <div className="flex overflow-x-auto hide-scrollbar gap-2 -mx-4 sm:mx-0 px-4 sm:px-0">
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`whitespace-nowrap px-4 py-1.5 rounded-xl text-xs font-black transition-all border-2 shrink-0 ${
+                      activeCategory === cat.id
+                        ? 'bg-stone-950 text-white border-stone-950 shadow-[2px_2px_0px_#000]'
+                        : 'bg-white text-stone-800 border-stone-950 shadow-[2px_2px_0px_#000] hover:bg-stone-50'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {(searchQuery ? globalMatchingItems.map(g => g.item) : filteredActiveItems).map(item => {
+              const qty = cart[item.id]?.quantity || 0
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white border-2 border-stone-950 rounded-3xl p-5 shadow-[4px_4px_0px_#1c1917] hover:shadow-[6px_6px_0px_#1c1917] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    {item.image_url && (
+                      <div className="h-44 w-full rounded-2xl overflow-hidden border-2 border-stone-950 mb-3 bg-stone-100">
+                        <img src={item.image_url} alt={item.name} className="size-full object-cover" />
+                      </div>
+                    )}
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <VegIndicator isVeg={item.is_veg} />
+                        <h3 className="font-black text-stone-950 text-base tracking-tight">{item.name}</h3>
+                      </div>
+                      <span className="font-black text-stone-950 text-base tabular-nums bg-stone-100 px-2 py-0.5 rounded-lg border border-stone-300 shrink-0">
+                        ₹{item.price}
+                      </span>
+                    </div>
+                    {item.description && (
+                      <p className="text-stone-600 text-xs leading-relaxed line-clamp-2 mb-3">{item.description}</p>
+                    )}
+                  </div>
+
+                  <div className="pt-3 border-t border-stone-200 flex items-center justify-between">
+                    {item.preparation_time ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-700 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded-md">
+                        <Clock size={11} className="text-stone-500" />
+                        <span>{item.preparation_time}</span>
+                      </span>
+                    ) : <div />}
+
+                    {qty > 0 ? (
+                      <div className="flex items-center gap-2 bg-stone-100 border-2 border-stone-950 rounded-xl px-2 py-1 shadow-[2px_2px_0px_#000]">
+                        <button onClick={() => updateQuantity(item.id, -1)} className="p-1 font-black text-stone-950">
+                          <Minus size={14} />
+                        </button>
+                        <span className="font-black text-sm text-stone-950 min-w-[2ch] text-center">{qty}</span>
+                        <button onClick={() => updateQuantity(item.id, 1)} className="p-1 font-black text-stone-950">
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => addToCart(item)}
+                        className="bg-stone-950 hover:bg-stone-800 text-white font-black text-xs px-5 py-2 rounded-xl border-2 border-stone-950 shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
+                      >
+                        + Select
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 4. THEME: STREET POP DINER (street) ──
+  const renderStreetLayout = () => {
+    return (
+      <div className="relative min-h-screen bg-[#fffdf2] text-slate-900 font-sans pb-28">
+        <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-3 border-black shadow-[0_4px_0px_#000]">
+          <div className="max-w-4xl mx-auto px-4 py-3 sm:py-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">🔥</span>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-black text-black tracking-tight uppercase leading-none">
+                    {restaurant.name}
+                  </h1>
+                  <span className="text-[10px] font-black uppercase text-red-600 tracking-wider">
+                    FRESH STREET KITCHEN
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Category Pills */}
+            {!searchQuery && (
+              <div className="flex overflow-x-auto hide-scrollbar gap-2 -mx-4 sm:mx-0 px-4 sm:px-0">
+                {categories.map((cat, idx) => {
+                  const colors = ['bg-yellow-400', 'bg-emerald-400', 'bg-cyan-400', 'bg-pink-400', 'bg-orange-400']
+                  const activeColor = colors[idx % colors.length]
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-black transition-all border-2 border-black shrink-0 ${
+                        activeCategory === cat.id
+                          ? `${activeColor} text-black shadow-[3px_3px_0px_#000] scale-105`
+                          : 'bg-white text-black shadow-[2px_2px_0px_#000] hover:bg-slate-50'
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {(searchQuery ? globalMatchingItems.map(g => g.item) : filteredActiveItems).map(item => {
+              const qty = cart[item.id]?.quantity || 0
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white border-3 border-black rounded-3xl p-4.5 shadow-[6px_6px_0px_#000] hover:shadow-[8px_8px_0px_#000] transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    {item.image_url && (
+                      <div className="h-44 w-full rounded-2xl overflow-hidden border-2 border-black mb-3 bg-slate-100">
+                        <img src={item.image_url} alt={item.name} className="size-full object-cover" />
+                      </div>
+                    )}
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <VegIndicator isVeg={item.is_veg} />
+                        <h3 className="font-black text-black text-base uppercase tracking-tight">{item.name}</h3>
+                      </div>
+                      <span className="font-black text-black text-base bg-yellow-300 border-2 border-black px-2.5 py-0.5 rounded-xl shadow-[2px_2px_0px_#000] shrink-0">
+                        ₹{item.price}
+                      </span>
+                    </div>
+                    {item.description && (
+                      <p className="text-slate-700 text-xs font-medium leading-relaxed line-clamp-2 mb-3">{item.description}</p>
+                    )}
+                  </div>
+
+                  <div className="pt-3 border-t-2 border-black/10 flex items-center justify-between">
+                    {item.preparation_time ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black text-orange-950 bg-orange-100 border-2 border-black px-2 py-0.5 rounded-lg shadow-[1px_1px_0px_#000]">
+                        <Clock size={11} className="text-orange-600" />
+                        <span>{item.preparation_time}</span>
+                      </span>
+                    ) : <div />}
+
+                    {qty > 0 ? (
+                      <div className="flex items-center gap-2 bg-yellow-300 border-2 border-black rounded-xl px-2 py-1 shadow-[2px_2px_0px_#000]">
+                        <button onClick={() => updateQuantity(item.id, -1)} className="p-1 font-black text-black">
+                          <Minus size={14} />
+                        </button>
+                        <span className="font-black text-sm text-black min-w-[2ch] text-center">{qty}</span>
+                        <button onClick={() => updateQuantity(item.id, 1)} className="p-1 font-black text-black">
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => addToCart(item)}
+                        className="bg-red-500 hover:bg-red-600 text-white font-black text-xs px-5 py-2 rounded-xl border-2 border-black shadow-[3px_3px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
+                      >
+                        + GRAB IT
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
+      {/* Live Demo Theme Switcher Bar for testing all 7 themes */}
+      {restaurant.slug === 'demo-restaurant' && (
+        <aside aria-label="Demo theme selector" className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-xl border border-white/20 rounded-full px-3 py-1.5 shadow-2xl flex items-center gap-1.5 max-w-[95vw] overflow-x-auto hide-scrollbar">
+          <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider pl-1 pr-1 shrink-0">
+            🎨 Theme:
+          </span>
+          {[
+            { id: 'book', label: 'Classic Book' },
+            { id: 'dark-luxe', label: 'Midnight Luxe' },
+            { id: 'chalkboard', label: 'Chalkboard' },
+            { id: 'bento', label: 'Nordic Bento' },
+            { id: 'street', label: 'Street Pop' },
+            { id: 'modern', label: 'Modern List' },
+            { id: 'grid', label: 'Photo Grid' },
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => setPreviewTheme(t.id)}
+              className={`whitespace-nowrap px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                previewTheme === t.id
+                  ? 'bg-white text-slate-950 font-black shadow-xs'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </aside>
+      )}
+
       {cartItemCount > 0 && !isCartOpen && (
         <button
           onClick={() => setIsCartOpen(true)}
@@ -958,6 +1537,11 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
       {themeLayout === 'book' && renderBookLayout()}
       {themeLayout === 'modern' && renderModernOrGrid(false)}
       {themeLayout === 'grid' && renderModernOrGrid(true)}
+      {themeLayout === 'dark-luxe' && renderDarkLuxeLayout()}
+      {themeLayout === 'chalkboard' && renderChalkboardLayout()}
+      {themeLayout === 'bento' && renderBentoLayout()}
+      {themeLayout === 'street' && renderStreetLayout()}
+      {!['book', 'modern', 'grid', 'dark-luxe', 'chalkboard', 'bento', 'street'].includes(themeLayout) && renderBookLayout()}
     </>
   )
 }

@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-
-const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'menuqr-admin-2025'
+import { isAuthorizedAdmin } from '@/lib/adminAuth'
 
 export async function GET(req: Request) {
-  const key = req.headers.get('x-admin-key')
-  if (key !== ADMIN_KEY) {
+  if (!isAuthorizedAdmin(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

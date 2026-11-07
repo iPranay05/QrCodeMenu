@@ -62,6 +62,7 @@ export default function RegisterPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        accessToken: authData.session?.access_token,
         userId: authData.user.id,
         restaurantName: data.restaurantName,
         slug,

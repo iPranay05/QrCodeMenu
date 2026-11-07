@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 
 function generateReferralCode(name: string): string {
   const prefix = name.trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3).padEnd(3, 'X')
@@ -9,6 +10,13 @@ function generateReferralCode(name: string): string {
 
 export async function POST(req: Request) {
   try {
+    // Rate limit: max 5 registrations per IP per hour
+    const clientIp = getClientIp(req)
+    const { success } = checkRateLimit(`ambassador-reg:${clientIp}`, 5, 60 * 60 * 1000)
+    if (!success) {
+      return NextResponse.json({ error: 'Too many registrations from this IP. Please try again later.' }, { status: 429 })
+    }
+
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -18,6 +26,18 @@ export async function POST(req: Request) {
 
     if (!name || !email || !phone || !college || !city) {
       return NextResponse.json({ error: 'All fields are required.' }, { status: 400 })
+    }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ error: 'Invalid email address format.' }, { status: 400 })
+    }
+
+    // Basic phone validation (at least 7 digits)
+    const cleanPhone = phone.replace(/[^0-9+]/g, '')
+    if (cleanPhone.length < 7) {
+      return NextResponse.json({ error: 'Invalid phone number format.' }, { status: 400 })
     }
 
     // Check if email already exists

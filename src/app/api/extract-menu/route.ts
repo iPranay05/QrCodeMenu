@@ -34,7 +34,8 @@ Return ONLY a valid JSON object matching the following structure. Do NOT wrap it
           "price": 15.99,
           "description": "Optional brief description or ingredients found",
           "is_veg": true,
-          "ingredients": "Extracted list of ingredients if explicitly mentioned"
+          "ingredients": "Extracted list of ingredients if explicitly mentioned",
+          "preparation_time": "Estimated food preparation time if explicitly noted (e.g. 15-20 mins)"
         }
       ]
     }

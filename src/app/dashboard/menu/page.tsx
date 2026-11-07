@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, Edit3, Save, X, ChevronDown, ChevronUp, Upload, Leaf, Drumstick, Database, AlertTriangle, Sparkles, Camera, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Edit3, Save, X, ChevronDown, ChevronUp, Upload, Leaf, Drumstick, Database, AlertTriangle, Sparkles, Camera, Loader2, Clock } from 'lucide-react'
 import type { Restaurant, MenuCategory, MenuItem } from '@/lib/types'
 
 export default function MenuBuilderPage() {
@@ -22,6 +22,8 @@ export default function MenuBuilderPage() {
   const [isScanning, setIsScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState('')
   const scanInputRef = useRef<HTMLInputElement>(null)
+  const newItemNameRef = useRef<HTMLInputElement>(null)
+  const editCategoryNameRef = useRef<HTMLInputElement>(null)
   
   const [dbError, setDbError] = useState<'tables_missing' | 'restaurant_missing' | null>(null)
   const [initName, setInitName] = useState('')
@@ -30,7 +32,7 @@ export default function MenuBuilderPage() {
   const [itemSearchQuery, setItemSearchQuery] = useState('')
 
   const emptyItemForm = {
-    name: '', description: '', price: '', ingredients: '', video_url: '', is_veg: true, is_available: true, imageFile: null as File | null, imagePreview: null as string | null
+    name: '', description: '', price: '', ingredients: '', video_url: '', preparation_time: '', is_veg: true, is_available: true, imageFile: null as File | null, imagePreview: null as string | null
   }
   const [itemForm, setItemForm] = useState(emptyItemForm)
 
@@ -41,6 +43,24 @@ export default function MenuBuilderPage() {
   }, [categories, activeCategoryId])
 
   useEffect(() => { loadData() }, [])
+
+  // Focus new-item name input without scrolling the page
+  useEffect(() => {
+    if (addingItemFor) {
+      requestAnimationFrame(() => {
+        newItemNameRef.current?.focus({ preventScroll: true })
+      })
+    }
+  }, [addingItemFor])
+
+  // Focus category rename input without scrolling the page
+  useEffect(() => {
+    if (editingCategoryId) {
+      requestAnimationFrame(() => {
+        editCategoryNameRef.current?.focus({ preventScroll: true })
+      })
+    }
+  }, [editingCategoryId])
 
   const loadData = async () => {
     try {
@@ -209,6 +229,7 @@ export default function MenuBuilderPage() {
       description: itemForm.description,
       ingredients: itemForm.ingredients,
       video_url: itemForm.video_url,
+      preparation_time: itemForm.preparation_time ? itemForm.preparation_time.trim() : null,
       price: parseFloat(itemForm.price) || 0,
       is_veg: itemForm.is_veg,
       is_available: itemForm.is_available,
@@ -255,6 +276,7 @@ export default function MenuBuilderPage() {
       description: editingItem.description,
       ingredients: editingItem.ingredients,
       video_url: editingItem.video_url,
+      preparation_time: editingItem.preparation_time ? editingItem.preparation_time.trim() : null,
       price: editingItem.price,
       is_veg: editingItem.is_veg,
       is_available: editingItem.is_available,
@@ -380,6 +402,7 @@ export default function MenuBuilderPage() {
             price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
             description: item.description || '',
             ingredients: item.ingredients || '',
+            preparation_time: item.preparation_time || null,
             is_veg: item.is_veg ?? true,
             is_available: true,
             display_order: index,
@@ -639,6 +662,7 @@ export default function MenuBuilderPage() {
                         {editingCategoryId === category.id ? (
                           <div className="flex items-center gap-1 flex-1" onClick={e => e.stopPropagation()}>
                             <input
+                              ref={editCategoryNameRef}
                               value={editingCategoryName}
                               onChange={e => setEditingCategoryName(e.target.value)}
                               onKeyDown={e => {
@@ -646,7 +670,6 @@ export default function MenuBuilderPage() {
                                 if (e.key === 'Escape') setEditingCategoryId(null)
                               }}
                               className="px-2 py-1 rounded-lg bg-white text-gray-900 border border-gray-200 text-xs font-semibold focus:outline-none w-full"
-                              autoFocus
                             />
                             <button onClick={() => updateCategory(category.id)} className="text-green-600 hover:bg-green-50 p-1 rounded-lg">
                               <Save size={14} />
@@ -819,6 +842,17 @@ export default function MenuBuilderPage() {
                                 />
                               </div>
                               <div>
+                                <label className="text-[10px] font-bold text-gray-500 mb-1 flex items-center gap-1">
+                                  <Clock size={11} className="text-amber-500" /> Prep Time (Optional)
+                                </label>
+                                <input
+                                  value={editingItem.preparation_time || ''}
+                                  onChange={e => setEditingItem(prev => prev ? { ...prev, preparation_time: e.target.value } : prev)}
+                                  placeholder="e.g. 15-20 mins"
+                                  className="w-full px-3 py-2 rounded-xl glass-input text-xs text-gray-900 font-semibold"
+                                />
+                              </div>
+                              <div>
                                 <label className="text-[10px] font-bold text-gray-500 mb-1 block">Video Link (YouTube/Vimeo)</label>
                                 <input
                                   value={editingItem.video_url || ''}
@@ -928,6 +962,12 @@ export default function MenuBuilderPage() {
                                       {item.description}
                                     </p>
                                   )}
+                                  {item.preparation_time && (
+                                    <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50/80 border border-amber-200/70 px-2 py-0.5 rounded-full w-fit mt-1.5">
+                                      <Clock size={10} className="text-amber-600 flex-shrink-0" />
+                                      <span>{item.preparation_time}</span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 
@@ -965,11 +1005,11 @@ export default function MenuBuilderPage() {
                         <label className="text-xs font-bold text-gray-500 mb-1.5 block">Name *</label>
                         <input
                           id="new-item-name"
+                          ref={newItemNameRef}
                           value={itemForm.name}
                           onChange={e => setItemForm(prev => ({ ...prev, name: e.target.value }))}
                           placeholder="Paneer Tikka"
                           className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-gray-900 font-medium"
-                          autoFocus
                         />
                       </div>
                       <div>
@@ -1007,15 +1047,28 @@ export default function MenuBuilderPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-gray-500 mb-1.5 block">Video Link (Optional)</label>
+                        <label className="text-xs font-bold text-gray-500 mb-1.5 flex items-center gap-1.5">
+                          <Clock size={13} className="text-amber-500" />
+                          <span>Prep Time (Optional)</span>
+                        </label>
                         <input
-                          id="new-item-video"
-                          value={itemForm.video_url}
-                          onChange={e => setItemForm(prev => ({ ...prev, video_url: e.target.value }))}
-                          placeholder="https://youtube.com/..."
+                          id="new-item-prep-time"
+                          value={itemForm.preparation_time}
+                          onChange={e => setItemForm(prev => ({ ...prev, preparation_time: e.target.value }))}
+                          placeholder="e.g. 15-20 mins"
                           className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-gray-900 font-medium"
                         />
                       </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 mb-1.5 block">Video Link (Optional)</label>
+                      <input
+                        id="new-item-video"
+                        value={itemForm.video_url}
+                        onChange={e => setItemForm(prev => ({ ...prev, video_url: e.target.value }))}
+                        placeholder="https://youtube.com/..."
+                        className="w-full px-4 py-2.5 rounded-xl glass-input text-xs text-gray-900 font-medium"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-bold text-gray-500 mb-1.5 block">Photo (Optional)</label>

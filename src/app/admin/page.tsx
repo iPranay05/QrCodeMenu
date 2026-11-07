@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import {
   QrCode, Users, Copy, CheckCircle, TrendingUp, Search, Lock, Eye, EyeOff,
   RefreshCw, MapPin, GraduationCap, Phone, Mail, Calendar, Store,
-  ChevronDown, ChevronUp, ExternalLink, Gift, Globe
+  ChevronDown, ChevronUp, ExternalLink, Gift, Globe, LogOut
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
@@ -261,6 +261,7 @@ export default function AdminPage() {
       if (data.success) {
         setAuthed(true)
         setPwError(false)
+        setPassword('') // Wipe password from React state immediately
       } else {
         setPwError(true)
         toast.error('Incorrect admin password')
@@ -270,10 +271,21 @@ export default function AdminPage() {
     }
   }
 
+  const logout = async () => {
+    try {
+      await fetch('/api/admin/auth', { method: 'DELETE' })
+      setAuthed(false)
+      toast.success('Logged out')
+    } catch {
+      setAuthed(false)
+    }
+  }
+
   const fetchAmbassadors = async () => {
     setLoadingAmb(true)
     try {
-      const res = await fetch('/api/admin/ambassadors', { headers: { 'x-admin-key': password } })
+      // Cookie is automatically sent by browser; password is never in headers or state
+      const res = await fetch('/api/admin/ambassadors')
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setAmbassadors(data.ambassadors || [])
@@ -284,13 +296,23 @@ export default function AdminPage() {
   const fetchRestaurants = async () => {
     setLoadingRest(true)
     try {
-      const res = await fetch('/api/admin/restaurants', { headers: { 'x-admin-key': password } })
+      // Cookie is automatically sent by browser; password is never in headers or state
+      const res = await fetch('/api/admin/restaurants')
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setRestaurants(data.restaurants || [])
     } catch (err: any) { toast.error(err.message || 'Failed to load restaurants') }
     finally { setLoadingRest(false) }
   }
+
+  // Check if existing session cookie is valid on mount
+  useEffect(() => {
+    fetch('/api/admin/auth')
+      .then(res => {
+        if (res.ok) setAuthed(true)
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (authed) { fetchAmbassadors(); fetchRestaurants() }
@@ -369,9 +391,14 @@ export default function AdminPage() {
             <span className="text-slate-300">|</span>
             <span className="text-slate-600 font-bold text-sm">Admin Panel</span>
           </div>
-          <button onClick={() => { fetchAmbassadors(); fetchRestaurants() }} disabled={isLoading} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors disabled:opacity-50">
-            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} /> Refresh
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={() => { fetchAmbassadors(); fetchRestaurants() }} disabled={isLoading} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors disabled:opacity-50">
+              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} /> Refresh
+            </button>
+            <button onClick={logout} className="flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-rose-600 transition-colors">
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
         </div>
       </div>
 
