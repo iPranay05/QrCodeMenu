@@ -1,6 +1,6 @@
 # 📲 MenuQR
 
-**Branded QR code menus for restaurants.** Owners create a digital menu, design a custom QR code, print it, and customers scan to browse and order. Update the menu anytime without reprinting, because the QR always points to the same link: `/menu/<slug>`.
+**A digital menu platform for restaurants.** Owners build a mobile-friendly menu, share it through a branded QR code, and customers scan to browse and order from their phones. Update prices or items anytime and the change goes live instantly, with no reprinting, because the QR always points to the same link: `/menu/<slug>`.
 
 🌐 **Live:** [qdishly.in](https://www.qdishly.in/)
 
@@ -8,20 +8,21 @@
 
 ## Core Features
 
-**QR code designer** (`/dashboard/qrcode`)
+### 🍽️ Digital Menu
+- **Menu builder:** categories, items, prices, descriptions, ingredients, photos and video links
+- **Item details:** veg / non-veg tags, preparation time and availability toggle (mark items sold out instantly)
+- **AI menu import:** upload a photo of a paper menu and get categories and items extracted automatically
+- **Mobile-first public menu** at `/menu/<slug>`, with no app download needed
+- **Table ordering:** customers place orders from their table, and owners manage them in an orders dashboard
+- **Branding and themes:** logo, cover image, colors, layout themes, opening hours and delivery-platform links
+
+### 📲 QR Code Designer
 - Colors and gradients, dot and eye shapes, centre logo or icon
 - Printable CTA frames ("Scan for Menu") and one-click presets
-- Scan-safety checks (contrast and error correction)
-- Export as PNG, JPEG, SVG or PDF
+- Scan-safety checks, plus PNG, JPEG, SVG and PDF export
 - Bulk per-table QR codes (`?table=N`) as a ZIP
-- Designs are saved per restaurant
 
-**Digital menu**
-- Menu builder with categories, photos, veg tags and prep time
-- AI import: upload a photo of a paper menu and get the items extracted
-- Mobile-first public menu with table ordering and an orders dashboard
-
-**Also included:** branding and themes, 7-day trial with Razorpay subscription, referral ambassadors, admin panel.
+**Also included:** 7-day trial with Razorpay subscription, referral ambassadors, admin panel.
 
 ## Quick Start
 
@@ -45,9 +46,3 @@ RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
 ADMIN_SECRET_KEY=
 ```
-
-## Notes
-
-- Set `NEXT_PUBLIC_APP_URL` to your production domain **before printing QR codes**.
-- Never commit `.env.local`; keep secret keys server-side.
-- This Next.js version has breaking changes. See `node_modules/next/dist/docs/`.
