@@ -28,27 +28,44 @@ export function ExportMenu({
   const [tableCount, setTableCount] = useState<number>(10)
   const [generatingZip, setGeneratingZip] = useState(false)
 
-  // Helper to generate a full framed canvas at specific resolution
+  // Helper to generate a full framed canvas at specific resolution.
+  // Uses getRawData('png') which fully awaits the internal SVG→Image→Canvas
+  // pipeline, then draws the result into a fresh canvas for framing.
   const generateCanvas = async (dataUrl: string, size: number): Promise<HTMLCanvasElement> => {
     const QRCodeStyling = (await import('qr-code-styling')).default
     const qrOptions = buildQrCodeOptions(design, dataUrl, size)
     const qr = new QRCodeStyling(qrOptions)
 
-    // Render to temp element to get canvas
-    const tempDiv = document.createElement('div')
-    tempDiv.style.display = 'none'
-    document.body.appendChild(tempDiv)
-    await qr.append(tempDiv)
+    // getRawData awaits _getElement internally, which awaits _canvasDrawingPromise
+    const blob = await qr.getRawData('png')
+    if (!blob) throw new Error('QR render returned empty blob')
 
-    const rawCanvas = tempDiv.querySelector('canvas')
-    if (!rawCanvas) {
-      document.body.removeChild(tempDiv)
-      throw new Error('Canvas render failed')
-    }
+    // Convert blob → object URL → load into Image → draw onto a fresh canvas
+    const objectUrl = URL.createObjectURL(blob as Blob)
+    const rawCanvas = await new Promise<HTMLCanvasElement>((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => {
+        const c = document.createElement('canvas')
+        c.width = size
+        c.height = size
+        const ctx = c.getContext('2d')!
+        // Fill background if not transparent
+        if (!design.isTransparentBg) {
+          ctx.fillStyle = design.backgroundColor
+          ctx.fillRect(0, 0, size, size)
+        }
+        ctx.drawImage(img, 0, 0, size, size)
+        URL.revokeObjectURL(objectUrl)
+        resolve(c)
+      }
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl)
+        reject(new Error('Failed to load QR image from blob'))
+      }
+      img.src = objectUrl
+    })
 
-    const framedCanvas = await renderFramedQrCanvas(rawCanvas, design, size)
-    document.body.removeChild(tempDiv)
-    return framedCanvas
+    return renderFramedQrCanvas(rawCanvas, design, size)
   }
 
   // PNG Export
@@ -217,16 +234,31 @@ export function ExportMenu({
           frameText: design.frameStyle !== 'none' ? `TABLE ${i}` : design.frameText,
         }
         
-        // Render canvas
+        // Render canvas via getRawData which fully awaits the internal pipeline
         const QRCodeStyling = (await import('qr-code-styling')).default
         const qr = new QRCodeStyling(buildQrCodeOptions(tableDesign, tableUrl, 1024))
-        const tempDiv = document.createElement('div')
-        tempDiv.style.display = 'none'
-        document.body.appendChild(tempDiv)
-        await qr.append(tempDiv)
-        const rawCanvas = tempDiv.querySelector('canvas')!
-        const framed = await renderFramedQrCanvas(rawCanvas, tableDesign, 1024)
-        document.body.removeChild(tempDiv)
+        const blob = await qr.getRawData('png')
+        if (!blob) throw new Error('QR render returned empty blob for table ' + i)
+        const objectUrl = URL.createObjectURL(blob as Blob)
+        const tableRawCanvas = await new Promise<HTMLCanvasElement>((resolve, reject) => {
+          const img = new Image()
+          img.onload = () => {
+            const c = document.createElement('canvas')
+            c.width = 1024
+            c.height = 1024
+            const cx = c.getContext('2d')!
+            if (!tableDesign.isTransparentBg) {
+              cx.fillStyle = tableDesign.backgroundColor
+              cx.fillRect(0, 0, 1024, 1024)
+            }
+            cx.drawImage(img, 0, 0, 1024, 1024)
+            URL.revokeObjectURL(objectUrl)
+            resolve(c)
+          }
+          img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('img load failed')) }
+          img.src = objectUrl
+        })
+        const framed = await renderFramedQrCanvas(tableRawCanvas, tableDesign, 1024)
 
         const dataUrl = framed.toDataURL('image/png')
         const base64 = dataUrl.split(',')[1]
