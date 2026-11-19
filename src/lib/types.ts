@@ -118,6 +118,8 @@ export interface MenuItem {
   preparation_time: string | null
   is_available: boolean
   is_veg: boolean
+  available_start_time: string | null
+  available_end_time: string | null
   display_order: number
   created_at: string
   updated_at: string

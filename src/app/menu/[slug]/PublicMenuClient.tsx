@@ -4,6 +4,7 @@ import { MapPin, Phone, Globe, Search, ArrowLeft, ChevronLeft, ChevronRight, Sho
 import type { Restaurant, MenuCategoryWithItems, MenuItem } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
+import { isItemAvailableNow } from '@/lib/menuAvailability'
 
 interface Props {
   restaurant: Restaurant
@@ -131,6 +132,12 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
   }
 
   const addToCart = (item: MenuItem) => {
+    const availability = isItemAvailableNow(item)
+    if (!availability.available) {
+      toast.error(availability.reason || 'This item is currently unavailable')
+      return
+    }
+
     setCart(prev => {
       const existing = prev[item.id]
       return {
@@ -171,6 +178,12 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
       return
     }
     if (cartItems.length === 0) return
+
+    const unavailableItem = cartItems.find(({ item }) => !isItemAvailableNow(item).available)
+    if (unavailableItem) {
+      toast.error(`"${unavailableItem.item.name}" is currently unavailable`)
+      return
+    }
 
     setIsSubmitting(true)
     try {
@@ -246,10 +259,11 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
   const renderItemCard = (item: MenuItem, categoryName?: string, isGrid = false) => {
     const isExpanded = expandedItemId === item.id
     const qtyInCart = cart[item.id]?.quantity || 0
+    const availability = isItemAvailableNow(item)
 
     if (isGrid) {
       return (
-        <div key={item.id} className="group bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden border border-neutral-200/60 shadow-sm flex flex-col transition-all hover:shadow-md">
+        <div key={item.id} className={`group bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden border border-neutral-200/60 shadow-sm flex flex-col transition-all hover:shadow-md ${!availability.available ? 'opacity-85' : ''}`}>
           {item.image_url ? (
             <div className="relative h-40 w-full overflow-hidden bg-neutral-100 cursor-pointer" onClick={() => setExpandedItemId(isExpanded ? null : item.id)}>
               <img src={item.image_url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -265,7 +279,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
           
           <div className="p-4 flex flex-col flex-1">
             <div className="flex justify-between items-start gap-2 mb-1 cursor-pointer" onClick={() => setExpandedItemId(isExpanded ? null : item.id)}>
-              <h3 className="font-display font-black text-neutral-800 text-[15px] leading-tight">
+              <h3 className={`font-display font-black text-neutral-800 text-[15px] leading-tight ${!availability.available ? 'text-neutral-500' : ''}`}>
                 {item.name}
               </h3>
               <span className="font-display font-extrabold text-neutral-800 text-[15px] flex-shrink-0" style={{ color: primaryColor }}>
@@ -279,12 +293,20 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
               </p>
             )}
 
-            {item.preparation_time && (
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50/90 border border-amber-200/70 px-2 py-0.5 rounded-md w-fit mb-2 shadow-xs">
-                <Clock size={12} className="text-amber-600 flex-shrink-0" />
-                <span>{item.preparation_time}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 flex-wrap mb-2">
+              {item.preparation_time && (
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50/90 border border-amber-200/70 px-2 py-0.5 rounded-md shadow-xs">
+                  <Clock size={11} className="text-amber-600 flex-shrink-0" />
+                  <span>{item.preparation_time}</span>
+                </div>
+              )}
+              {!availability.available && (
+                <div className="flex items-center gap-1 text-[11px] font-bold text-red-600 bg-red-50 border border-red-200/70 px-2 py-0.5 rounded-md shadow-xs">
+                  <Clock size={11} className="text-red-500 flex-shrink-0" />
+                  <span>{availability.reason || 'Unavailable'}</span>
+                </div>
+              )}
+            </div>
 
             {(item.ingredients || item.video_url || item.preparation_time) && !isExpanded && (
                <button onClick={() => setExpandedItemId(item.id)} className="text-[10px] text-neutral-400 flex items-center gap-1 mb-2 hover:text-neutral-600 transition-colors w-fit">
@@ -302,7 +324,11 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                 )}
                 {!categoryName && <div />}
                 
-                {qtyInCart > 0 ? (
+                {!availability.available ? (
+                  <span className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-400 border border-neutral-200 select-none">
+                    Unavailable
+                  </span>
+                ) : qtyInCart > 0 ? (
                   <div className="flex items-center gap-2 bg-neutral-100 rounded-lg px-1.5 py-1">
                     <button onClick={(e) => { e.stopPropagation(); updateQuantity(item.id, -1) }} className="text-neutral-600 hover:text-red-500 p-1 bg-white rounded-md shadow-sm">
                       <Minus size={14} />
@@ -328,7 +354,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
     }
 
     return (
-      <div key={item.id} className="group py-3 border-b border-neutral-200/60 last:border-0 flex flex-col gap-2">
+      <div key={item.id} className={`group py-3 border-b border-neutral-200/60 last:border-0 flex flex-col gap-2 ${!availability.available ? 'opacity-85' : ''}`}>
         <div className="flex gap-3 items-start cursor-pointer" onClick={() => setExpandedItemId(isExpanded ? null : item.id)}>
           {item.image_url && (
             <img src={item.image_url} alt={item.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-neutral-200 shadow-sm flex-shrink-0" />
@@ -337,7 +363,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
             <div className="flex justify-between items-start gap-2">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <VegIndicator isVeg={item.is_veg} />
-                <h3 className="font-display font-black text-neutral-800 text-[15px] sm:text-[16px] leading-tight">
+                <h3 className={`font-display font-black text-neutral-800 text-[15px] sm:text-[16px] leading-tight ${!availability.available ? 'text-neutral-500' : ''}`}>
                   {item.name}
                 </h3>
                 {(item.ingredients || item.video_url || item.preparation_time) && (
@@ -360,6 +386,12 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                   <span>{item.preparation_time}</span>
                 </span>
               )}
+              {!availability.available && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 bg-red-50 border border-red-200/70 px-2 py-0.5 rounded-md shadow-xs">
+                  <Clock size={11} className="text-red-500 flex-shrink-0" />
+                  <span>{availability.reason || 'Unavailable'}</span>
+                </span>
+              )}
               {categoryName && (
                 <span className="text-[9px] uppercase tracking-wider font-bold bg-neutral-200/50 px-1.5 py-0.5 rounded text-neutral-600">
                   {categoryName}
@@ -372,7 +404,11 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
         {isExpanded && renderItemDetails(item)}
 
         <div className="flex justify-end items-center mt-1">
-          {qtyInCart > 0 ? (
+          {!availability.available ? (
+            <span className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-400 border border-neutral-200 select-none">
+              Unavailable
+            </span>
+          ) : qtyInCart > 0 ? (
             <div className="flex items-center gap-3 bg-white border border-neutral-300 rounded-lg px-2 py-1 shadow-sm">
               <button onClick={(e) => { e.stopPropagation(); updateQuantity(item.id, -1) }} className="text-neutral-500 hover:text-red-500 p-1">
                 <Minus size={14} />
@@ -1043,10 +1079,11 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
           <div className="space-y-4">
             {(searchQuery ? globalMatchingItems.map(g => g.item) : filteredActiveItems).map(item => {
               const qty = cart[item.id]?.quantity || 0
+              const availability = isItemAvailableNow(item)
               return (
                 <div
                   key={item.id}
-                  className="bg-[#0e1320]/90 border border-amber-500/20 hover:border-amber-500/40 rounded-2xl p-4 shadow-xl backdrop-blur-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className={`bg-[#0e1320]/90 border border-amber-500/20 hover:border-amber-500/40 rounded-2xl p-4 shadow-xl backdrop-blur-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${!availability.available ? 'opacity-85' : ''}`}
                 >
                   <div className="flex gap-3.5 items-start flex-1 min-w-0">
                     {item.image_url && (
@@ -1055,17 +1092,25 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <VegIndicator isVeg={item.is_veg} />
-                        <h3 className="font-bold text-white text-base truncate">{item.name}</h3>
+                        <h3 className={`font-bold text-white text-base truncate ${!availability.available ? 'text-slate-400' : ''}`}>{item.name}</h3>
                       </div>
                       {item.description && (
                         <p className="text-slate-400 text-xs leading-relaxed line-clamp-2 mb-2">{item.description}</p>
                       )}
-                      {item.preparation_time && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-md">
-                          <Clock size={11} className="text-amber-400" />
-                          <span>{item.preparation_time}</span>
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {item.preparation_time && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-md">
+                            <Clock size={11} className="text-amber-400" />
+                            <span>{item.preparation_time}</span>
+                          </span>
+                        )}
+                        {!availability.available && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-950/50 border border-red-500/40 px-2 py-0.5 rounded-md">
+                            <Clock size={11} className="text-red-400" />
+                            <span>{availability.reason || 'Unavailable'}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -1073,7 +1118,11 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                     <span className="font-cinzel font-black text-amber-300 text-lg tabular-nums">
                       ₹{item.price}
                     </span>
-                    {qty > 0 ? (
+                    {!availability.available ? (
+                      <span className="bg-white/5 border border-white/10 text-slate-500 font-bold text-xs px-4 py-2 rounded-xl select-none">
+                        Unavailable
+                      </span>
+                    ) : qty > 0 ? (
                       <div className="flex items-center gap-2 bg-slate-900 border border-amber-500/40 rounded-xl px-2 py-1">
                         <button onClick={() => updateQuantity(item.id, -1)} className="text-amber-300 hover:text-white p-1">
                           <Minus size={14} />
@@ -1139,10 +1188,11 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
           <div className="space-y-4">
             {(searchQuery ? globalMatchingItems.map(g => g.item) : filteredActiveItems).map(item => {
               const qty = cart[item.id]?.quantity || 0
+              const availability = isItemAvailableNow(item)
               return (
                 <div
                   key={item.id}
-                  className="bg-stone-900/60 border-2 border-dashed border-stone-700/80 hover:border-stone-500 rounded-2xl p-4 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className={`bg-stone-900/60 border-2 border-dashed border-stone-700/80 hover:border-stone-500 rounded-2xl p-4 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${!availability.available ? 'opacity-85' : ''}`}
                 >
                   <div className="flex gap-3.5 items-start flex-1 min-w-0">
                     {item.image_url && (
@@ -1151,17 +1201,25 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <VegIndicator isVeg={item.is_veg} />
-                        <h3 className="font-cinzel font-black text-stone-100 text-base">{item.name}</h3>
+                        <h3 className={`font-cinzel font-black text-stone-100 text-base ${!availability.available ? 'text-stone-400' : ''}`}>{item.name}</h3>
                       </div>
                       {item.description && (
                         <p className="text-stone-400 text-xs leading-relaxed line-clamp-2 mb-2">{item.description}</p>
                       )}
-                      {item.preparation_time && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-stone-800 border border-stone-600 px-2 py-0.5 rounded-md">
-                          <Clock size={11} className="text-amber-400" />
-                          <span>{item.preparation_time}</span>
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {item.preparation_time && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-stone-800 border border-stone-600 px-2 py-0.5 rounded-md">
+                            <Clock size={11} className="text-amber-400" />
+                            <span>{item.preparation_time}</span>
+                          </span>
+                        )}
+                        {!availability.available && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-950/40 border border-red-500/40 px-2 py-0.5 rounded-md">
+                            <Clock size={11} className="text-red-400" />
+                            <span>{availability.reason || 'Unavailable'}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -1169,7 +1227,11 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                     <span className="font-mono font-black text-amber-300 text-lg tabular-nums">
                       ₹{item.price}
                     </span>
-                    {qty > 0 ? (
+                    {!availability.available ? (
+                      <span className="bg-stone-800/80 border border-stone-700 text-stone-500 font-bold text-xs px-3 py-1.5 rounded-lg select-none">
+                        Unavailable
+                      </span>
+                    ) : qty > 0 ? (
                       <div className="flex items-center gap-2 bg-stone-800 border border-stone-600 rounded-lg px-2 py-1">
                         <button onClick={() => updateQuantity(item.id, -1)} className="text-stone-300 hover:text-white p-1">
                           <Minus size={14} />
@@ -1240,10 +1302,11 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {(searchQuery ? globalMatchingItems.map(g => g.item) : filteredActiveItems).map(item => {
               const qty = cart[item.id]?.quantity || 0
+              const availability = isItemAvailableNow(item)
               return (
                 <div
                   key={item.id}
-                  className="bg-white border-2 border-stone-950 rounded-3xl p-5 shadow-[4px_4px_0px_#1c1917] hover:shadow-[6px_6px_0px_#1c1917] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all flex flex-col justify-between"
+                  className={`bg-white border-2 border-stone-950 rounded-3xl p-5 shadow-[4px_4px_0px_#1c1917] hover:shadow-[6px_6px_0px_#1c1917] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all flex flex-col justify-between ${!availability.available ? 'opacity-85' : ''}`}
                 >
                   <div>
                     {item.image_url && (
@@ -1254,7 +1317,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-1.5">
                         <VegIndicator isVeg={item.is_veg} />
-                        <h3 className="font-black text-stone-950 text-base tracking-tight">{item.name}</h3>
+                        <h3 className={`font-black text-stone-950 text-base tracking-tight ${!availability.available ? 'text-stone-500' : ''}`}>{item.name}</h3>
                       </div>
                       <span className="font-black text-stone-950 text-base tabular-nums bg-stone-100 px-2 py-0.5 rounded-lg border border-stone-300 shrink-0">
                         ₹{item.price}
@@ -1266,14 +1329,26 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                   </div>
 
                   <div className="pt-3 border-t border-stone-200 flex items-center justify-between">
-                    {item.preparation_time ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-700 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded-md">
-                        <Clock size={11} className="text-stone-500" />
-                        <span>{item.preparation_time}</span>
-                      </span>
-                    ) : <div />}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {item.preparation_time && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-700 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded-md">
+                          <Clock size={11} className="text-stone-500" />
+                          <span>{item.preparation_time}</span>
+                        </span>
+                      )}
+                      {!availability.available && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-300 px-2 py-0.5 rounded-md">
+                          <Clock size={11} className="text-red-500" />
+                          <span>{availability.reason || 'Unavailable'}</span>
+                        </span>
+                      )}
+                    </div>
 
-                    {qty > 0 ? (
+                    {!availability.available ? (
+                      <span className="bg-stone-200 text-stone-500 font-black text-xs px-4 py-2 rounded-xl border border-stone-300 select-none">
+                        Unavailable
+                      </span>
+                    ) : qty > 0 ? (
                       <div className="flex items-center gap-2 bg-stone-100 border-2 border-stone-950 rounded-xl px-2 py-1 shadow-[2px_2px_0px_#000]">
                         <button onClick={() => updateQuantity(item.id, -1)} className="p-1 font-black text-stone-950">
                           <Minus size={14} />
@@ -1350,10 +1425,11 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {(searchQuery ? globalMatchingItems.map(g => g.item) : filteredActiveItems).map(item => {
               const qty = cart[item.id]?.quantity || 0
+              const availability = isItemAvailableNow(item)
               return (
                 <div
                   key={item.id}
-                  className="bg-white border-3 border-black rounded-3xl p-4.5 shadow-[6px_6px_0px_#000] hover:shadow-[8px_8px_0px_#000] transition-all flex flex-col justify-between"
+                  className={`bg-white border-3 border-black rounded-3xl p-4.5 shadow-[6px_6px_0px_#000] hover:shadow-[8px_8px_0px_#000] transition-all flex flex-col justify-between ${!availability.available ? 'opacity-85' : ''}`}
                 >
                   <div>
                     {item.image_url && (
@@ -1364,7 +1440,7 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-1.5">
                         <VegIndicator isVeg={item.is_veg} />
-                        <h3 className="font-black text-black text-base uppercase tracking-tight">{item.name}</h3>
+                        <h3 className={`font-black text-black text-base uppercase tracking-tight ${!availability.available ? 'text-slate-400' : ''}`}>{item.name}</h3>
                       </div>
                       <span className="font-black text-black text-base bg-yellow-300 border-2 border-black px-2.5 py-0.5 rounded-xl shadow-[2px_2px_0px_#000] shrink-0">
                         ₹{item.price}
@@ -1376,14 +1452,26 @@ export default function PublicMenuClient({ restaurant, categories }: Props) {
                   </div>
 
                   <div className="pt-3 border-t-2 border-black/10 flex items-center justify-between">
-                    {item.preparation_time ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-black text-orange-950 bg-orange-100 border-2 border-black px-2 py-0.5 rounded-lg shadow-[1px_1px_0px_#000]">
-                        <Clock size={11} className="text-orange-600" />
-                        <span>{item.preparation_time}</span>
-                      </span>
-                    ) : <div />}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {item.preparation_time && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-orange-950 bg-orange-100 border-2 border-black px-2 py-0.5 rounded-lg shadow-[1px_1px_0px_#000]">
+                          <Clock size={11} className="text-orange-600" />
+                          <span>{item.preparation_time}</span>
+                        </span>
+                      )}
+                      {!availability.available && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-red-700 bg-red-100 border-2 border-black px-2 py-0.5 rounded-lg shadow-[1px_1px_0px_#000]">
+                          <Clock size={11} className="text-red-600" />
+                          <span>{availability.reason || 'Unavailable'}</span>
+                        </span>
+                      )}
+                    </div>
 
-                    {qty > 0 ? (
+                    {!availability.available ? (
+                      <span className="bg-neutral-200 text-neutral-500 font-black text-xs px-4 py-2 rounded-xl border-2 border-neutral-400 select-none">
+                        Unavailable
+                      </span>
+                    ) : qty > 0 ? (
                       <div className="flex items-center gap-2 bg-yellow-300 border-2 border-black rounded-xl px-2 py-1 shadow-[2px_2px_0px_#000]">
                         <button onClick={() => updateQuantity(item.id, -1)} className="p-1 font-black text-black">
                           <Minus size={14} />

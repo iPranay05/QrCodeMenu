@@ -2,8 +2,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, Edit3, Save, X, ChevronDown, ChevronUp, Upload, Leaf, Drumstick, Database, AlertTriangle, Sparkles, Camera, Loader2, Clock } from 'lucide-react'
+import { Plus, Trash2, Edit3, Save, X, ChevronDown, ChevronUp, Upload, Leaf, Drumstick, Database, AlertTriangle, Sparkles, Camera, Loader2, Clock, ToggleLeft, ToggleRight } from 'lucide-react'
 import type { Restaurant, MenuCategory, MenuItem } from '@/lib/types'
+import { availabilityBadgeText } from '@/lib/menuAvailability'
 
 export default function MenuBuilderPage() {
   const supabase = createClient()
@@ -32,7 +33,9 @@ export default function MenuBuilderPage() {
   const [itemSearchQuery, setItemSearchQuery] = useState('')
 
   const emptyItemForm = {
-    name: '', description: '', price: '', ingredients: '', video_url: '', preparation_time: '', is_veg: true, is_available: true, imageFile: null as File | null, imagePreview: null as string | null
+    name: '', description: '', price: '', ingredients: '', video_url: '', preparation_time: '', is_veg: true, is_available: true,
+    available_start_time: '', available_end_time: '', limitByTime: false,
+    imageFile: null as File | null, imagePreview: null as string | null
   }
   const [itemForm, setItemForm] = useState(emptyItemForm)
 
@@ -233,9 +236,10 @@ export default function MenuBuilderPage() {
       price: parseFloat(itemForm.price) || 0,
       is_veg: itemForm.is_veg,
       is_available: itemForm.is_available,
+      available_start_time: (itemForm.limitByTime && itemForm.available_start_time) ? itemForm.available_start_time : null,
+      available_end_time: (itemForm.limitByTime && itemForm.available_end_time) ? itemForm.available_end_time : null,
       display_order: categories.find(c => c.id === categoryId)?.menu_items.length || 0,
     }).select().single()
-
     if (error) {
       toast.error(error.message)
       setAddingItemFor(categoryId) // Restore form on error
@@ -280,6 +284,8 @@ export default function MenuBuilderPage() {
       price: editingItem.price,
       is_veg: editingItem.is_veg,
       is_available: editingItem.is_available,
+      available_start_time: editingItem.available_start_time || null,
+      available_end_time: editingItem.available_end_time || null,
     }).eq('id', editingItem.id)
 
     if (error) toast.error(error.message)
@@ -304,6 +310,17 @@ export default function MenuBuilderPage() {
       ))
       toast.success('Item deleted')
     }
+  }
+
+  const toggleItemAvailability = async (item: MenuItem, categoryId: string) => {
+    const newVal = !item.is_available
+    const { error } = await supabase.from('menu_items').update({ is_available: newVal }).eq('id', item.id)
+    if (error) { toast.error(error.message); return }
+    setCategories(prev => prev.map(c => c.id === categoryId
+      ? { ...c, menu_items: c.menu_items.map(i => i.id === item.id ? { ...i, is_available: newVal } : i) }
+      : c
+    ))
+    toast.success(newVal ? 'Item marked available ✅' : 'Item marked unavailable ⏸')
   }
 
   const uploadItemImage = async (file: File, itemId: string, categoryId: string) => {
@@ -903,6 +920,48 @@ export default function MenuBuilderPage() {
                                   Available
                                 </label>
                               </div>
+
+                              {/* Time-based availability */}
+                              <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-200/80 space-y-2.5">
+                                <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(editingItem.available_start_time || editingItem.available_end_time)}
+                                    onChange={e => {
+                                      if (e.target.checked) {
+                                        setEditingItem(prev => prev ? { ...prev, available_start_time: '11:00', available_end_time: '23:00' } : prev)
+                                      } else {
+                                        setEditingItem(prev => prev ? { ...prev, available_start_time: null, available_end_time: null } : prev)
+                                      }
+                                    }}
+                                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
+                                  />
+                                  <Clock size={12} className="text-indigo-600" />
+                                  <span>Time-Based Serving Window</span>
+                                </label>
+                                {Boolean(editingItem.available_start_time || editingItem.available_end_time) && (
+                                  <div className="grid grid-cols-2 gap-2 pt-1">
+                                    <div>
+                                      <label className="text-[10px] font-bold text-gray-500 mb-1 block">Start Time</label>
+                                      <input
+                                        type="time"
+                                        value={editingItem.available_start_time || ''}
+                                        onChange={e => setEditingItem(prev => prev ? { ...prev, available_start_time: e.target.value } : prev)}
+                                        className="w-full px-2.5 py-1.5 rounded-lg glass-input text-xs text-gray-900 font-semibold"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[10px] font-bold text-gray-500 mb-1 block">End Time</label>
+                                      <input
+                                        type="time"
+                                        value={editingItem.available_end_time || ''}
+                                        onChange={e => setEditingItem(prev => prev ? { ...prev, available_end_time: e.target.value } : prev)}
+                                        className="w-full px-2.5 py-1.5 rounded-lg glass-input text-xs text-gray-900 font-semibold"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                               <div className="flex gap-2 pt-1.5 border-t border-slate-100">
                                 <button
                                   onClick={updateItem}
@@ -968,12 +1027,33 @@ export default function MenuBuilderPage() {
                                       <span>{item.preparation_time}</span>
                                     </div>
                                   )}
+                                  {availabilityBadgeText(item) && (
+                                    <div className="flex items-center gap-1 text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200/70 px-2 py-0.5 rounded-full w-fit mt-1.5">
+                                      <Clock size={10} className="text-blue-500 flex-shrink-0" />
+                                      <span>{availabilityBadgeText(item)}</span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 
                               <div className="flex items-center justify-between border-t border-slate-100 mt-3 pt-2.5">
                                 <span className="font-black text-slate-900 text-base">₹{item.price}</span>
                                 <div className="flex items-center gap-1">
+                                  {/* Quick availability toggle */}
+                                  <button
+                                    title={item.is_available ? 'Mark unavailable' : 'Mark available'}
+                                    onClick={() => toggleItemAvailability(item, activeCategory.id)}
+                                    className={`p-1.5 rounded-lg transition-all ${
+                                      item.is_available
+                                        ? 'text-green-600 hover:bg-green-50'
+                                        : 'text-gray-400 hover:bg-gray-100'
+                                    }`}
+                                  >
+                                    {item.is_available
+                                      ? <ToggleRight size={18} />
+                                      : <ToggleLeft size={18} />
+                                    }
+                                  </button>
                                   <button
                                     onClick={() => setEditingItem(item)}
                                     className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-white/80 transition-all"
@@ -1105,6 +1185,56 @@ export default function MenuBuilderPage() {
                         />
                         <Leaf size={12} className="text-green-500" /> Veg
                       </label>
+                      <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={itemForm.is_available}
+                          onChange={e => setItemForm(prev => ({ ...prev, is_available: e.target.checked }))}
+                          className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
+                        />
+                        Available
+                      </label>
+                    </div>
+
+                    {/* Time-based availability */}
+                    <div className="bg-white/80 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+                      <label className="flex items-center gap-1.5 text-xs font-bold text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={itemForm.limitByTime}
+                          onChange={e => setItemForm(prev => ({
+                            ...prev,
+                            limitByTime: e.target.checked,
+                            available_start_time: e.target.checked ? (prev.available_start_time || '11:00') : '',
+                            available_end_time: e.target.checked ? (prev.available_end_time || '23:00') : '',
+                          }))}
+                          className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
+                        />
+                        <Clock size={12} className="text-indigo-600" />
+                        <span>Limit Availability by Time (e.g. Breakfast / Lunch)</span>
+                      </label>
+                      {itemForm.limitByTime && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="text-[10px] font-bold text-gray-500 mb-1 block">Start Time</label>
+                            <input
+                              type="time"
+                              value={itemForm.available_start_time}
+                              onChange={e => setItemForm(prev => ({ ...prev, available_start_time: e.target.value }))}
+                              className="w-full px-3 py-2 rounded-xl glass-input text-xs text-gray-900 font-semibold"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-gray-500 mb-1 block">End Time</label>
+                            <input
+                              type="time"
+                              value={itemForm.available_end_time}
+                              onChange={e => setItemForm(prev => ({ ...prev, available_end_time: e.target.value }))}
+                              className="w-full px-3 py-2 rounded-xl glass-input text-xs text-gray-900 font-semibold"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-2 pt-1 border-t border-slate-100">
                       <button
